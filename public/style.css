@@ -1,0 +1,236 @@
+ 
+:root {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #e8edf7;
+  background: #0b1020;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 50% 0%, #172b50 0%, transparent 52%),
+    #0b1020;
+}
+
+.topbar {
+  height: 76px;
+  padding: 0 7%;
+  border-bottom: 1px solid #ffffff12;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 21px;
+  font-weight: 750;
+}
+
+.brand-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: #3478f6;
+  box-shadow: 0 0 24px #3478f644;
+}
+
+.brand-light { color: #83aaff; }
+
+.top-label {
+  color: #a8b7d2;
+  font-size: 13px;
+}
+
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #48d9a0;
+  margin-right: 7px;
+}
+
+.container {
+  width: min(880px, 90%);
+  margin: 0 auto;
+}
+
+.intro {
+  text-align: center;
+  padding: 76px 0 36px;
+}
+
+.eyebrow {
+  color: #83aaff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+h1 {
+  margin: 17px 0;
+  font-size: clamp(32px, 5vw, 49px);
+  line-height: 1.15;
+  letter-spacing: -1.8px;
+}
+
+h1 span { color: #82aaff; }
+
+.intro p {
+  max-width: 600px;
+  margin: 0 auto;
+  color: #9ba9c3;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.panel, .diagnosis {
+  border: 1px solid #ffffff16;
+  border-radius: 16px;
+  background: #111a2cdd;
+  padding: 26px;
+  box-shadow: 0 20px 70px #0002;
+}
+
+.panel label {
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0b1221;
+  border: 1px solid #34435e;
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.input-icon {
+  color: #8495b2;
+  padding-left: 10px;
+  font-size: 21px;
+}
+
+input {
+  min-width: 0;
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: #fff;
+  padding: 12px 4px;
+  font-size: 14px;
+}
+
+input::placeholder { color: #687894; }
+
+button {
+  border: 0;
+  border-radius: 7px;
+  background: #3478f6;
+  color: white;
+  padding: 13px 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:hover { background: #4a88ff; }
+button:disabled { opacity: .6; cursor: wait; }
+
+.hint {
+  color: #7f8eaa;
+  font-size: 12px;
+  margin: 12px 0 0;
+}
+
+#message {
+  color: #a9c5ff;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.results { margin-top: 35px; }
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+h2 { font-size: 18px; }
+.section-heading h2 { margin: 0; }
+#checked-at { color: #8492ab; font-size: 11px; }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.metric {
+  border: 1px solid #ffffff16;
+  background: #111a2c;
+  padding: 21px;
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.metric-label, .metric-detail {
+  display: block;
+  color: #95a4bf;
+  font-size: 12px;
+}
+
+.metric strong {
+  display: block;
+  font-size: 29px;
+  margin: 15px 0 8px;
+  overflow-wrap: anywhere;
+}
+
+.metric-detail { line-height: 1.5; }
+.diagnosis { margin-top: 16px; }
+.diagnosis p, .diagnosis li {
+  color: #b3bfd3;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.diagnosis h3 { font-size: 14px; margin-top: 23px; }
+.diagnosis ul { padding-left: 20px; }
+footer {
+  text-align: center;
+  padding: 45px 0 28px;
+  color: #71809c;
+  font-size: 12px;
+}
+
+[hidden] { display: none !important; }
+
+@media (max-width: 600px) {
+  .topbar { padding: 0 5%; }
+  .top-label { font-size: 11px; }
+  .intro { padding-top: 52px; }
+  .panel { padding: 18px; }
+  .input-wrap { flex-wrap: wrap; }
+  input { flex-basis: 65%; }
+  .input-wrap button { width: 100%; }
+  .metrics { grid-template-columns: 1fr; }
+  .metric strong { margin: 8px 0; }
+}
