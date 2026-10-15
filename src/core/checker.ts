@@ -1,3 +1,4 @@
+
 import axios from "axios";
 import type { AxiosError } from "axios";
 
@@ -26,17 +27,17 @@ export async function checkUrl(
     });
 
     const latencyMs = Date.now() - startTime;
-    const isOnline =
-      response.status >= 200 && response.status < 300;
+    const statusCode = response.status;
+    const isSuccessful = statusCode >= 200 && statusCode < 300;
 
     return {
       url,
-      statusCode: response.status,
+      statusCode,
       latencyMs,
-      isOnline,
-      error: isOnline
+      isOnline: true,
+      error: isSuccessful
         ? null
-        : "A URL respondeu com HTTP " + response.status + ".",
+        : `O servidor respondeu com HTTP ${statusCode}.`,
       checkedAt: new Date().toISOString(),
     };
   } catch (error: unknown) {
@@ -49,7 +50,7 @@ export async function checkUrl(
       axiosError.code === "ECONNABORTED" ||
       axiosError.code === "ETIMEDOUT"
     ) {
-      message = "Tempo limite excedido (" + timeoutMs + " ms).";
+      message = `Tempo limite excedido (${timeoutMs} ms).`;
     } else if (axiosError.code === "ENOTFOUND") {
       message = "O domínio não foi encontrado.";
     } else if (axiosError.code === "ECONNREFUSED") {
@@ -58,6 +59,8 @@ export async function checkUrl(
       message = "A conexão foi interrompida.";
     } else if (axiosError.code === "ERR_INVALID_URL") {
       message = "A URL informada é inválida.";
+    } else if (axiosError.code === "ERR_CANCELED") {
+      message = "A verificação foi cancelada.";
     } else if (axiosError.message) {
       message = axiosError.message;
     }

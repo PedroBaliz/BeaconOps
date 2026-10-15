@@ -1,4 +1,4 @@
- 
+
 const form = document.getElementById("analyze-form");
 const urlInput = document.getElementById("url");
 const button = document.getElementById("analyze-button");
@@ -35,16 +35,34 @@ form.addEventListener("submit", async (event) => {
 
     const { result, analysis } = data;
 
-    document.getElementById("status-value").textContent = analysis.status;
+    const statusValue = document.getElementById("status-value");
+    statusValue.textContent = analysis.status;
+    statusValue.classList.remove("status-up", "status-degraded", "status-down");
+
+    const statusClasses = {
+      UP: "status-up",
+      DEGRADED: "status-degraded",
+      DOWN: "status-down"
+    };
+
+    statusValue.classList.add(
+      statusClasses[analysis.status] || "status-down"
+    );
+
     document.getElementById("http-value").textContent =
       result.statusCode ?? "—";
+
     document.getElementById("latency-value").textContent =
-      `${result.latencyMs} ms`;
+      typeof result.latencyMs === "number"
+        ? `${result.latencyMs} ms`
+        : "—";
 
     document.getElementById("status-description").textContent =
-      analysis.status === "UP" ? "Resposta HTTP de sucesso" :
-      analysis.status === "DEGRADED" ? "Resposta lenta" :
-      "Falha ou resposta inesperada";
+      analysis.status === "UP"
+        ? "Resposta HTTP de sucesso"
+        : analysis.status === "DEGRADED"
+          ? "Resposta lenta"
+          : "Falha ou resposta inesperada";
 
     document.getElementById("summary").textContent = analysis.summary;
 
@@ -58,13 +76,15 @@ form.addEventListener("submit", async (event) => {
     }
 
     document.getElementById("checked-at").textContent =
-      `Verificado em ${new Date(result.checkedAt).toLocaleTimeString("pt-BR")}`;
+      `Verificado às ${new Date(result.checkedAt).toLocaleTimeString("pt-BR")}`;
 
     results.hidden = false;
     message.textContent = "Análise concluída.";
   } catch (error) {
     message.textContent =
-      error instanceof Error ? error.message : "Ocorreu um erro inesperado.";
+      error instanceof Error
+        ? error.message
+        : "Ocorreu um erro inesperado.";
   } finally {
     button.disabled = false;
     button.innerHTML = 'Analisar site <span>→</span>';

@@ -234,3 +234,38 @@ footer {
   .metrics { grid-template-columns: 1fr; }
   .metric strong { margin: 8px 0; }
 }
+
+.status-up {
+  color: #48d9a0;
+}
+
+.status-degraded {
+  color: #f5c451;
+}
+
+.status-down {
+  color: #ff6b7a;
+}
+
+.metric {
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.metric:hover {
+  border-color: #3478f655;
+  transform: translateY(-2px);
+}
+
+button {
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #83aaff;
+  outline-offset: 3px;
+}
