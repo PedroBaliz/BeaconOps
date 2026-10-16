@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { checkUrl } from "../core/checker.js";
 import { analyzeResult } from "../core/analyzer.js";
+import { saveAnalysis } from "../db/history.js";
 
 const router = Router();
 
@@ -38,6 +39,8 @@ router.post("/analyze", async (req, res) => {
 
     const result = await checkUrl(parsedUrl.toString());
     const analysis = analyzeResult(result);
+
+    await saveAnalysis(result, analysis);
 
     res.json({
       success: true,
