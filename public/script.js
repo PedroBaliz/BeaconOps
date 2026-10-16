@@ -13,6 +13,105 @@ const summary = document.getElementById("summary");
 const recommendations = document.getElementById("recommendations");
 const checkedAt = document.getElementById("checked-at");
 
+const historyBody = document.getElementById("history-body");
+const historyMessage = document.getElementById("history-message");
+const refreshHistoryButton = document.getElementById("refresh-history");
+
+const statusClasses = {
+  UP: "status-up",
+  DEGRADED: "status-degraded",
+  DOWN: "status-down"
+};
+
+function formatDate(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleString("pt-BR");
+}
+
+function createCell(value) {
+  const cell = document.createElement("td");
+  cell.textContent = value;
+  return cell;
+}
+
+function createStatusCell(status) {
+  const cell = document.createElement("td");
+  const badge = document.createElement("span");
+
+  badge.textContent = status || "UNKNOWN";
+  badge.classList.add("status-badge");
+
+  const statusClass = statusClasses[status];
+
+  if (statusClass) {
+    badge.classList.add(statusClass);
+  }
+
+  cell.appendChild(badge);
+  return cell;
+}
+
+async function loadHistory() {
+  historyMessage.textContent = "Carregando histórico...";
+  refreshHistoryButton.disabled = true;
+
+  try {
+    const response = await fetch("/api/history");
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.error || "Não foi possível carregar o histórico."
+      );
+    }
+
+    if (!Array.isArray(data.history)) {
+      throw new Error("O servidor retornou um histórico inválido.");
+    }
+
+    historyBody.replaceChildren();
+
+    if (data.history.length === 0) {
+      historyMessage.textContent =
+        "Nenhuma análise registrada ainda.";
+      return;
+    }
+
+    for (const item of data.history) {
+      const row = document.createElement("tr");
+
+      row.appendChild(createCell(item.url || "—"));
+      row.appendChild(createStatusCell(item.analysisStatus));
+      row.appendChild(createCell(
+        item.statusCode == null ? "—" : String(item.statusCode)
+      ));
+      row.appendChild(createCell(
+        typeof item.latencyMs === "number"
+          ? `${item.latencyMs} ms`
+          : "—"
+      ));
+      row.appendChild(createCell(formatDate(item.checkedAt)));
+
+      historyBody.appendChild(row);
+    }
+
+    historyMessage.textContent =
+      `${data.history.length} análise(s) encontrada(s).`;
+  } catch (error) {
+    historyMessage.textContent =
+      error instanceof Error
+        ? error.message
+        : "Erro ao carregar o histórico.";
+  } finally {
+    refreshHistoryButton.disabled = false;
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -44,7 +143,7 @@ form.addEventListener("submit", async (event) => {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ url })
+      body: JSON.stringify({ url: parsedUrl.toString() })
     });
 
     const data = await response.json();
@@ -69,12 +168,6 @@ form.addEventListener("submit", async (event) => {
       "status-degraded",
       "status-down"
     );
-
-    const statusClasses = {
-      UP: "status-up",
-      DEGRADED: "status-degraded",
-      DOWN: "status-down"
-    };
 
     statusValue.classList.add(
       statusClasses[analysis.status] || "status-down"
@@ -115,14 +208,12 @@ form.addEventListener("submit", async (event) => {
       }
     }
 
-    const checkedDate = new Date(result.checkedAt);
-
-    checkedAt.textContent = Number.isNaN(checkedDate.getTime())
-      ? "Horário indisponível"
-      : `Verificado às ${checkedDate.toLocaleTimeString("pt-BR")}`;
+    checkedAt.textContent = `Verificado às ${formatDate(result.checkedAt)}`;
 
     results.hidden = false;
     message.textContent = "Análise concluída.";
+
+    await loadHistory();
   } catch (error) {
     message.textContent =
       error instanceof Error
@@ -133,3 +224,7 @@ form.addEventListener("submit", async (event) => {
     button.innerHTML = 'Analisar site <span>→</span>';
   }
 });
+
+refreshHistoryButton.addEventListener("click", loadHistory);
+
+loadHistory();

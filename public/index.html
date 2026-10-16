@@ -1,39 +1,62 @@
- 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BeaconOps — Análise de Sites</title>
+  <meta name="theme-color" content="#0b1120">
+  <meta name="description" content="Monitore sites e APIs com o BeaconOps. Analise disponibilidade, latência e histórico de respostas.">
+  <title>BeaconOps — Monitoramento de Sites e APIs</title>
   <link rel="stylesheet" href="/tailwind.css">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/">
+    <a class="brand" href="/" aria-label="BeaconOps - Página inicial">
       <span class="brand-icon">B</span>
       <span>Beacon<span class="brand-light">Ops</span></span>
     </a>
-    <span class="top-label"><span class="dot"></span> Análise instantânea</span>
+    <span class="top-label">
+      <span class="dot"></span>
+      Análise instantânea
+    </span>
   </header>
 
   <main class="container">
     <section class="intro">
       <span class="eyebrow">MONITORAMENTO INTELIGENTE</span>
       <h1>Seu site está <span>funcionando?</span></h1>
-      <p>Descubra em segundos se um site está acessível, quanto tempo leva para responder e o que precisa de atenção.</p>
+      <p>
+        Descubra em segundos se um site está acessível, quanto tempo
+        leva para responder e o que precisa de atenção.
+      </p>
     </section>
 
     <section class="panel">
-      <label for="url">Endereço do site</label>
+      <label for="url">Endereço do site ou API</label>
+
       <form id="analyze-form">
         <div class="input-wrap">
-          <span class="input-icon">↗</span>
-          <input id="url" type="text" placeholder="https://seusite.com.br" required>
-          <button id="analyze-button" type="submit">Analisar site <span>→</span></button>
+          <span class="input-icon" aria-hidden="true">↗</span>
+          <input
+            id="url"
+            name="url"
+            type="url"
+            placeholder="https://seusite.com.br"
+            autocomplete="url"
+            spellcheck="false"
+            required
+          >
+          <button id="analyze-button" type="submit">
+            Analisar site <span aria-hidden="true">→</span>
+          </button>
         </div>
       </form>
-      <p class="hint">Informe um endereço completo, começando com https:// ou http://</p>
+
+      <p class="hint">
+        Informe um endereço completo, começando com https:// ou http://
+      </p>
+
       <div id="message" role="status" aria-live="polite"></div>
     </section>
 
@@ -49,11 +72,13 @@
           <strong id="status-value">—</strong>
           <span id="status-description" class="metric-detail"></span>
         </article>
+
         <article class="metric">
           <span class="metric-label">Código HTTP</span>
           <strong id="http-value">—</strong>
           <span class="metric-detail">Resposta do servidor</span>
         </article>
+
         <article class="metric">
           <span class="metric-label">Tempo de resposta</span>
           <strong id="latency-value">—</strong>
@@ -64,12 +89,51 @@
       <article class="diagnosis">
         <h2>Diagnóstico</h2>
         <p id="summary"></p>
+
         <h3>Recomendações</h3>
         <ul id="recommendations"></ul>
       </article>
     </section>
 
-    <footer>BeaconOps · Diagnóstico rápido para sites e APIs</footer>
+    <section id="history-section" class="history-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">ATIVIDADE RECENTE</span>
+          <h2>Histórico de análises</h2>
+        </div>
+
+        <button
+          id="refresh-history"
+          type="button"
+          class="secondary-button"
+        >
+          Atualizar histórico
+        </button>
+      </div>
+
+      <p id="history-message" role="status" aria-live="polite">
+        Carregando histórico...
+      </p>
+
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th scope="col">Site</th>
+              <th scope="col">Status</th>
+              <th scope="col">HTTP</th>
+              <th scope="col">Latência</th>
+              <th scope="col">Data</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      BeaconOps · Diagnóstico rápido para sites e APIs
+    </footer>
   </main>
 
   <script src="/script.js" defer></script>
