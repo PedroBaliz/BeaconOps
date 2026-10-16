@@ -36,3 +36,27 @@ export async function saveAnalysis(
 
   await pool.query(query, values);
 }
+
+export async function getAnalysisHistory() {
+  const query = `
+    SELECT
+      id,
+      url,
+      status_code AS "statusCode",
+      latency_ms AS "latencyMs",
+      is_online AS "isOnline",
+      error,
+      analysis_status AS "analysisStatus",
+      summary,
+      recommendations,
+      checked_at AS "checkedAt",
+      created_at AS "createdAt"
+    FROM analysis_history
+    ORDER BY id DESC
+    LIMIT 50
+  `;
+
+  const result = await pool.query(query);
+
+  return result.rows;
+}

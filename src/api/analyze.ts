@@ -2,8 +2,25 @@ import { Router } from "express";
 import { checkUrl } from "../core/checker.js";
 import { analyzeResult } from "../core/analyzer.js";
 import { saveAnalysis } from "../db/history.js";
+import { getAnalysisHistory } from "../db/history.js";
 
 const router = Router();
+
+router.get("/history", async (_req, res) => {
+  try {
+    const history = await getAnalysisHistory();
+
+    res.json({
+      success: true,
+      total: history.length,
+      history,
+    });
+  } catch {
+    res.status(500).json({
+      error: "Não foi possível consultar o histórico.",
+    });
+  }
+});
 
 router.post("/analyze", async (req, res) => {
   try {
