@@ -5,13 +5,31 @@ const button = document.getElementById("analyze-button");
 const message = document.getElementById("message");
 const results = document.getElementById("results");
 
+const statusValue = document.getElementById("status-value");
+const httpValue = document.getElementById("http-value");
+const latencyValue = document.getElementById("latency-value");
+const statusDescription = document.getElementById("status-description");
+const summary = document.getElementById("summary");
+const recommendations = document.getElementById("recommendations");
+const checkedAt = document.getElementById("checked-at");
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const url = urlInput.value.trim();
 
-  if (!url) {
-    message.textContent = "Informe o endereço do site.";
+  let parsedUrl;
+
+  try {
+    parsedUrl = new URL(url);
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      throw new Error("Protocolo inválido.");
+    }
+  } catch {
+    message.textContent =
+      "Informe uma URL válida começando com http:// ou https://.";
+    results.hidden = true;
     return;
   }
 
@@ -23,21 +41,34 @@ form.addEventListener("submit", async (event) => {
   try {
     const response = await fetch("/api/analyze", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({ url })
     });
 
     const data = await response.json();
 
     if (!response.ok || !data.success) {
-      throw new Error(data.error || "Não foi possível analisar o site.");
+      throw new Error(
+        data.error || "Não foi possível analisar o site."
+      );
     }
 
-    const { result, analysis } = data;
+    const result = data.result;
+    const analysis = data.analysis;
 
-    const statusValue = document.getElementById("status-value");
-    statusValue.textContent = analysis.status;
-    statusValue.classList.remove("status-up", "status-degraded", "status-down");
+    if (!result || !analysis) {
+      throw new Error("O servidor retornou uma resposta incompleta.");
+    }
+
+    statusValue.textContent = analysis.status || "UNKNOWN";
+
+    statusValue.classList.remove(
+      "status-up",
+      "status-degraded",
+      "status-down"
+    );
 
     const statusClasses = {
       UP: "status-up",
@@ -49,34 +80,46 @@ form.addEventListener("submit", async (event) => {
       statusClasses[analysis.status] || "status-down"
     );
 
-    document.getElementById("http-value").textContent =
-      result.statusCode ?? "—";
+    httpValue.textContent = result.statusCode ?? "—";
 
-    document.getElementById("latency-value").textContent =
+    latencyValue.textContent =
       typeof result.latencyMs === "number"
         ? `${result.latencyMs} ms`
         : "—";
 
-    document.getElementById("status-description").textContent =
+    statusDescription.textContent =
       analysis.status === "UP"
-        ? "Resposta HTTP de sucesso"
+        ? "Serviço respondendo normalmente"
         : analysis.status === "DEGRADED"
-          ? "Resposta lenta"
-          : "Falha ou resposta inesperada";
+          ? "Serviço com desempenho degradado"
+          : "Serviço com falha ou situação inesperada";
 
-    document.getElementById("summary").textContent = analysis.summary;
+    summary.textContent =
+      analysis.summary || "Não há diagnóstico disponível.";
 
-    const list = document.getElementById("recommendations");
-    list.replaceChildren();
+    recommendations.replaceChildren();
 
-    for (const recommendation of analysis.recommendations) {
+    const items = Array.isArray(analysis.recommendations)
+      ? analysis.recommendations
+      : [];
+
+    if (items.length === 0) {
       const item = document.createElement("li");
-      item.textContent = recommendation;
-      list.appendChild(item);
+      item.textContent = "Nenhuma recomendação disponível.";
+      recommendations.appendChild(item);
+    } else {
+      for (const recommendation of items) {
+        const item = document.createElement("li");
+        item.textContent = recommendation;
+        recommendations.appendChild(item);
+      }
     }
 
-    document.getElementById("checked-at").textContent =
-      `Verificado às ${new Date(result.checkedAt).toLocaleTimeString("pt-BR")}`;
+    const checkedDate = new Date(result.checkedAt);
+
+    checkedAt.textContent = Number.isNaN(checkedDate.getTime())
+      ? "Horário indisponível"
+      : `Verificado às ${checkedDate.toLocaleTimeString("pt-BR")}`;
 
     results.hidden = false;
     message.textContent = "Análise concluída.";
