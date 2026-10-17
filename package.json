@@ -8,6 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "tailwind:watch": "npx @tailwindcss/cli -i ./src/tailwind.css -o ./public/tailwind.css --watch"
   },
   "keywords": [],
