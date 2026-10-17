@@ -3,25 +3,25 @@ import cron from "node-cron";
 import { checkUrl } from "./checker.js";
 import { analyzeResult } from "./analyzer.js";
 import { saveAnalysis } from "../db/history.js";
-import { getMonitoredServices } from "../db/monitored-services.js";
+import {
+  getDueMonitoredServices,
+  scheduleNextCheck,
+} from "../db/monitored-services.js";
+
+let isRunning = false;
 
 export function startMonitor(): void {
   cron.schedule("* * * * *", async () => {
+    if (isRunning) {
+      return;
+    }
+
+    isRunning = true;
+
     try {
-      const services = await getMonitoredServices();
+      const services = await getDueMonitoredServices();
 
       for (const service of services) {
-        if (!service.isActive) {
-          continue;
-        }
-
-        const elapsedSeconds =
-          (Date.now() - new Date(service.createdAt).getTime()) / 1000;
-
-        if (elapsedSeconds < service.intervalSeconds) {
-          continue;
-        }
-
         try {
           const result = await checkUrl(service.url);
           const analysis = analyzeResult(result);
@@ -32,13 +32,27 @@ export function startMonitor(): void {
             `Falha ao monitorar ${service.url}:`,
             error instanceof Error ? error.message : error
           );
+        } finally {
+          try {
+            await scheduleNextCheck(
+              service.id,
+              service.intervalSeconds
+            );
+          } catch (error) {
+            console.error(
+              `Falha ao agendar próxima verificação de ${service.url}:`,
+              error instanceof Error ? error.message : error
+            );
+          }
         }
       }
     } catch (error) {
       console.error(
-        "Falha ao executar o ciclo de monitoramento:",
+        "Falha no ciclo de monitoramento:",
         error instanceof Error ? error.message : error
       );
+    } finally {
+      isRunning = false;
     }
   });
 
