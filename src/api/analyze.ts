@@ -1,8 +1,12 @@
+
 import { Router } from "express";
 import { checkUrl } from "../core/checker.js";
 import { analyzeResult } from "../core/analyzer.js";
-import { saveAnalysis } from "../db/history.js";
-import { getAnalysisHistory } from "../db/history.js";
+import { saveAnalysis, getAnalysisHistory } from "../db/history.js";
+import {
+  createMonitoredService,
+  getMonitoredServices,
+} from "../db/monitored-services.js";
 
 const router = Router();
 
@@ -67,6 +71,101 @@ router.post("/analyze", async (req, res) => {
   } catch {
     res.status(500).json({
       error: "Não foi possível analisar a URL.",
+    });
+  }
+});
+
+router.get("/monitors", async (_req, res) => {
+  try {
+    const monitors = await getMonitoredServices();
+
+    res.json({
+      success: true,
+      total: monitors.length,
+      monitors,
+    });
+  } catch {
+    res.status(500).json({
+      error: "Não foi possível consultar os serviços monitorados.",
+    });
+  }
+});
+
+router.post("/monitors", async (req, res) => {
+  const { name, url, intervalSeconds } = req.body as {
+    name?: unknown;
+    url?: unknown;
+    intervalSeconds?: unknown;
+  };
+
+  if (
+    typeof name !== "string" ||
+    name.trim().length === 0 ||
+    name.trim().length > 100
+  ) {
+    res.status(400).json({
+      error: "O nome deve ter entre 1 e 100 caracteres.",
+    });
+    return;
+  }
+
+  if (typeof url !== "string" || url.trim().length === 0) {
+    res.status(400).json({
+      error: "Informe uma URL válida.",
+    });
+    return;
+  }
+
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(url.trim());
+  } catch {
+    res.status(400).json({
+      error: "O formato da URL é inválido.",
+    });
+    return;
+  }
+
+  if (
+    parsedUrl.protocol !== "http:" &&
+    parsedUrl.protocol !== "https:"
+  ) {
+    res.status(400).json({
+      error: "A URL deve utilizar HTTP ou HTTPS.",
+    });
+    return;
+  }
+
+  const interval =
+    intervalSeconds === undefined ? 300 : intervalSeconds;
+
+  if (
+    typeof interval !== "number" ||
+    !Number.isInteger(interval) ||
+    interval < 60 ||
+    interval > 86400
+  ) {
+    res.status(400).json({
+      error: "O intervalo deve ser um número inteiro entre 60 e 86400 segundos.",
+    });
+    return;
+  }
+
+  try {
+    const monitor = await createMonitoredService(
+      name.trim(),
+      parsedUrl.toString(),
+      interval
+    );
+
+    res.status(201).json({
+      success: true,
+      monitor,
+    });
+  } catch {
+    res.status(500).json({
+      error: "Não foi possível cadastrar o serviço monitorado.",
     });
   }
 });
