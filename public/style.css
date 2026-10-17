@@ -622,3 +622,81 @@ input:focus-visible {
     width: 100%;
   }
 }
+
+/* Gerenciamento de serviços monitorados */
+
+.monitor-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.monitor-field {
+  min-width: 0;
+}
+
+.monitor-field label {
+  display: block;
+  margin-bottom: 8px;
+  color: #cbd7ed;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.monitor-field input,
+.monitor-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #34435e;
+  border-radius: 9px;
+  outline: none;
+  background: #0b1221;
+  color: #e8edf7;
+  font: inherit;
+  font-size: 13px;
+}
+
+.monitor-field input:focus,
+.monitor-field select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px #3478f622;
+}
+
+.monitor-field input::placeholder {
+  color: #687894;
+}
+
+#monitor-submit {
+  align-self: end;
+  min-height: 42px;
+}
+
+#monitor-message {
+  margin: 0 0 14px;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+#monitors-section {
+  margin-top: 35px;
+}
+
+#monitors-section .history-table td:nth-child(2) {
+  min-width: 180px;
+  max-width: 300px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .monitor-form {
+    grid-template-columns: 1fr;
+  }
+
+  #monitor-submit {
+    width: 100%;
+  }
+}

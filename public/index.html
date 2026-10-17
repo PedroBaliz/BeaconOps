@@ -95,6 +95,82 @@
       </article>
     </section>
 
+    
+<section id="monitors-section" class="history-section">
+  <div class="section-heading">
+    <div>
+      <span class="eyebrow">MONITORAMENTO CONTÍNUO</span>
+      <h2>Serviços monitorados</h2>
+    </div>
+
+    <button
+      id="refresh-monitors"
+      type="button"
+      class="secondary-button"
+    >
+      Atualizar serviços
+    </button>
+  </div>
+
+  <form id="monitor-form" class="monitor-form">
+    <div class="monitor-field">
+      <label for="monitor-name">Nome do serviço</label>
+      <input
+        id="monitor-name"
+        name="name"
+        type="text"
+        maxlength="100"
+        placeholder="Ex.: Minha API"
+        required
+      >
+    </div>
+
+    <div class="monitor-field">
+      <label for="monitor-url">URL do site ou API</label>
+      <input
+        id="monitor-url"
+        name="url"
+        type="url"
+        placeholder="https://api.exemplo.com"
+        required
+      >
+    </div>
+
+    <div class="monitor-field">
+      <label for="monitor-interval">Intervalo de verificação</label>
+      <select id="monitor-interval" name="intervalSeconds" required>
+        <option value="60">A cada 1 minuto</option>
+        <option value="300" selected>A cada 5 minutos</option>
+        <option value="600">A cada 10 minutos</option>
+        <option value="1800">A cada 30 minutos</option>
+      </select>
+    </div>
+
+    <button id="monitor-submit" type="submit">
+      Cadastrar serviço
+    </button>
+  </form>
+
+  <p id="monitor-message" role="status" aria-live="polite">
+    Carregando serviços monitorados...
+  </p>
+
+  <div class="history-table-wrap">
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th scope="col">Serviço</th>
+          <th scope="col">URL</th>
+          <th scope="col">Intervalo</th>
+          <th scope="col">Situação</th>
+        </tr>
+      </thead>
+      <tbody id="monitors-body"></tbody>
+    </table>
+  </div>
+</section>
+
+
     <section id="history-section" class="history-section">
       <div class="section-heading">
         <div>
