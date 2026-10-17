@@ -4,180 +4,178 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b1120">
-  <meta name="description" content="Monitore sites e APIs com o BeaconOps. Analise disponibilidade, latência e histórico de respostas.">
-  <title>BeaconOps — Monitoramento de Sites e APIs</title>
-  <link rel="stylesheet" href="/tailwind.css">
+  <meta
+    name="description"
+    content="BeaconOps: análise de disponibilidade, desempenho e monitoramento de sites e APIs."
+  >
+  <title>BeaconOps | Monitoramento de aplicações</title>
   <link rel="stylesheet" href="/style.css">
+  <script src="/script.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="BeaconOps - Página inicial">
-      <span class="brand-icon">B</span>
-      <span>Beacon<span class="brand-light">Ops</span></span>
-    </a>
-    <span class="top-label">
-      <span class="dot"></span>
-      Análise instantânea
-    </span>
+  <header class="site-header">
+    <div class="container header-content">
+      <a href="/" class="brand" aria-label="BeaconOps - Página inicial">
+        <span class="brand-mark">B</span>
+        <span>BeaconOps</span>
+      </a>
+      <span class="header-label">MONITORAMENTO DE APLICAÇÕES</span>
+    </div>
   </header>
 
   <main class="container">
-    <section class="intro">
-      <span class="eyebrow">MONITORAMENTO INTELIGENTE</span>
-      <h1>Seu site está <span>funcionando?</span></h1>
+    <section class="hero">
+      <span class="eyebrow">VISIBILIDADE EM TEMPO REAL</span>
+      <h1>Saiba se suas aplicações estão funcionando.</h1>
       <p>
-        Descubra em segundos se um site está acessível, quanto tempo
-        leva para responder e o que precisa de atenção.
+        Analise sites e APIs, acompanhe o desempenho e monitore a
+        disponibilidade dos seus serviços em um só lugar.
       </p>
     </section>
 
-    <section class="panel">
-      <label for="url">Endereço do site ou API</label>
+    <section class="analysis-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">ANÁLISE INSTANTÂNEA</span>
+          <h2>Verificar uma aplicação</h2>
+        </div>
+      </div>
 
-      <form id="analyze-form">
-        <div class="input-wrap">
-          <span class="input-icon" aria-hidden="true">↗</span>
+      <form id="analyze-form" class="analysis-form">
+        <label for="url">URL do site ou API</label>
+        <div class="input-group">
           <input
             id="url"
             name="url"
             type="url"
-            placeholder="https://seusite.com.br"
+            placeholder="https://api.exemplo.com"
             autocomplete="url"
-            spellcheck="false"
             required
           >
           <button id="analyze-button" type="submit">
-            Analisar site <span aria-hidden="true">→</span>
+            Analisar aplicação
           </button>
         </div>
       </form>
 
-      <p class="hint">
-        Informe um endereço completo, começando com https:// ou http://
+      <p id="message" role="status" aria-live="polite"></p>
+
+      <div id="results" class="results-section" hidden>
+        <div class="result-header">
+          <div>
+            <span class="eyebrow">RESULTADO DA ANÁLISE</span>
+            <h3 id="status-value">—</h3>
+          </div>
+          <span id="checked-at"></span>
+        </div>
+
+        <p id="status-description"></p>
+
+        <div class="metrics-grid">
+          <article class="metric-card">
+            <span>Status HTTP</span>
+            <strong id="http-value">—</strong>
+          </article>
+          <article class="metric-card">
+            <span>Latência</span>
+            <strong id="latency-value">—</strong>
+          </article>
+        </div>
+
+        <div class="analysis-details">
+          <h4>Resumo</h4>
+          <p id="summary"></p>
+
+          <h4>Recomendações</h4>
+          <ul id="recommendations"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="monitors-section" class="history-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">MONITORAMENTO CONTÍNUO</span>
+          <h2>Serviços monitorados</h2>
+        </div>
+        <button
+          id="refresh-monitors"
+          type="button"
+          class="secondary-button"
+        >
+          Atualizar serviços
+        </button>
+      </div>
+
+      <form id="monitor-form" class="monitor-form">
+        <div class="monitor-field">
+          <label for="monitor-name">Nome do serviço</label>
+          <input
+            id="monitor-name"
+            name="name"
+            type="text"
+            maxlength="100"
+            placeholder="Ex.: Minha API"
+            required
+          >
+        </div>
+
+        <div class="monitor-field">
+          <label for="monitor-url">URL do site ou API</label>
+          <input
+            id="monitor-url"
+            name="url"
+            type="url"
+            placeholder="https://api.exemplo.com"
+            required
+          >
+        </div>
+
+        <div class="monitor-field">
+          <label for="monitor-interval">Intervalo de verificação</label>
+          <select
+            id="monitor-interval"
+            name="intervalSeconds"
+            required
+          >
+            <option value="60">A cada 1 minuto</option>
+            <option value="300" selected>A cada 5 minutos</option>
+            <option value="600">A cada 10 minutos</option>
+            <option value="1800">A cada 30 minutos</option>
+          </select>
+        </div>
+
+        <button id="monitor-submit" type="submit">
+          Cadastrar serviço
+        </button>
+      </form>
+
+      <p id="monitor-message" role="status" aria-live="polite">
+        Carregando serviços monitorados...
       </p>
 
-      <div id="message" role="status" aria-live="polite"></div>
-    </section>
-
-    <section id="results" class="results" hidden>
-      <div class="section-heading">
-        <h2>Resultado da análise</h2>
-        <span id="checked-at"></span>
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th scope="col">Serviço</th>
+              <th scope="col">URL</th>
+              <th scope="col">Intervalo</th>
+              <th scope="col">Último status</th>
+              <th scope="col">Monitoramento</th>
+            </tr>
+          </thead>
+          <tbody id="monitors-body"></tbody>
+        </table>
       </div>
-
-      <div class="metrics">
-        <article class="metric">
-          <span class="metric-label">Status do serviço</span>
-          <strong id="status-value">—</strong>
-          <span id="status-description" class="metric-detail"></span>
-        </article>
-
-        <article class="metric">
-          <span class="metric-label">Código HTTP</span>
-          <strong id="http-value">—</strong>
-          <span class="metric-detail">Resposta do servidor</span>
-        </article>
-
-        <article class="metric">
-          <span class="metric-label">Tempo de resposta</span>
-          <strong id="latency-value">—</strong>
-          <span class="metric-detail">Latência desta tentativa</span>
-        </article>
-      </div>
-
-      <article class="diagnosis">
-        <h2>Diagnóstico</h2>
-        <p id="summary"></p>
-
-        <h3>Recomendações</h3>
-        <ul id="recommendations"></ul>
-      </article>
     </section>
-
-    
-<section id="monitors-section" class="history-section">
-  <div class="section-heading">
-    <div>
-      <span class="eyebrow">MONITORAMENTO CONTÍNUO</span>
-      <h2>Serviços monitorados</h2>
-    </div>
-
-    <button
-      id="refresh-monitors"
-      type="button"
-      class="secondary-button"
-    >
-      Atualizar serviços
-    </button>
-  </div>
-
-  <form id="monitor-form" class="monitor-form">
-    <div class="monitor-field">
-      <label for="monitor-name">Nome do serviço</label>
-      <input
-        id="monitor-name"
-        name="name"
-        type="text"
-        maxlength="100"
-        placeholder="Ex.: Minha API"
-        required
-      >
-    </div>
-
-    <div class="monitor-field">
-      <label for="monitor-url">URL do site ou API</label>
-      <input
-        id="monitor-url"
-        name="url"
-        type="url"
-        placeholder="https://api.exemplo.com"
-        required
-      >
-    </div>
-
-    <div class="monitor-field">
-      <label for="monitor-interval">Intervalo de verificação</label>
-      <select id="monitor-interval" name="intervalSeconds" required>
-        <option value="60">A cada 1 minuto</option>
-        <option value="300" selected>A cada 5 minutos</option>
-        <option value="600">A cada 10 minutos</option>
-        <option value="1800">A cada 30 minutos</option>
-      </select>
-    </div>
-
-    <button id="monitor-submit" type="submit">
-      Cadastrar serviço
-    </button>
-  </form>
-
-  <p id="monitor-message" role="status" aria-live="polite">
-    Carregando serviços monitorados...
-  </p>
-
-  <div class="history-table-wrap">
-    <table class="history-table">
-      <thead>
-        <tr>
-          <th scope="col">Serviço</th>
-          <th scope="col">URL</th>
-          <th scope="col">Intervalo</th>
-          <th scope="col">Situação</th>
-        </tr>
-      </thead>
-      <tbody id="monitors-body"></tbody>
-    </table>
-  </div>
-</section>
-
 
     <section id="history-section" class="history-section">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">ATIVIDADE RECENTE</span>
+          <span class="eyebrow">REGISTROS RECENTES</span>
           <h2>Histórico de análises</h2>
         </div>
-
         <button
           id="refresh-history"
           type="button"
@@ -195,23 +193,23 @@
         <table class="history-table">
           <thead>
             <tr>
-              <th scope="col">Site</th>
+              <th scope="col">URL</th>
               <th scope="col">Status</th>
               <th scope="col">HTTP</th>
               <th scope="col">Latência</th>
-              <th scope="col">Data</th>
+              <th scope="col">Data da análise</th>
             </tr>
           </thead>
           <tbody id="history-body"></tbody>
         </table>
       </div>
     </section>
-
-    <footer>
-      BeaconOps · Diagnóstico rápido para sites e APIs
-    </footer>
   </main>
 
-  <script src="/script.js" defer></script>
+  <footer class="site-footer">
+    <div class="container">
+      <p>BeaconOps — Monitoramento e diagnóstico de aplicações.</p>
+    </div>
+  </footer>
 </body>
 </html>

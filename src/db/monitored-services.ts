@@ -9,6 +9,9 @@ export interface MonitoredService {
   isActive: boolean;
   createdAt: Date;
   nextCheckAt: Date;
+  lastStatus: "UP" | "DEGRADED" | "DOWN" | null;
+  lastLatencyMs: number | null;
+  lastCheckedAt: Date | null;
 }
 
 export async function createMonitoredService(
@@ -31,7 +34,10 @@ export async function createMonitoredService(
       interval_seconds AS "intervalSeconds",
       is_active AS "isActive",
       created_at AS "createdAt",
-      next_check_at AS "nextCheckAt"
+      next_check_at AS "nextCheckAt",
+      NULL::text AS "lastStatus",
+      NULL::integer AS "lastLatencyMs",
+      NULL::timestamptz AS "lastCheckedAt"
   `;
 
   const result = await pool.query<MonitoredService>(query, [
@@ -46,15 +52,28 @@ export async function createMonitoredService(
 export async function getMonitoredServices(): Promise<MonitoredService[]> {
   const query = `
     SELECT
-      id,
-      name,
-      url,
-      interval_seconds AS "intervalSeconds",
-      is_active AS "isActive",
-      created_at AS "createdAt",
-      next_check_at AS "nextCheckAt"
-    FROM monitored_services
-    ORDER BY id DESC
+      m.id,
+      m.name,
+      m.url,
+      m.interval_seconds AS "intervalSeconds",
+      m.is_active AS "isActive",
+      m.created_at AS "createdAt",
+      m.next_check_at AS "nextCheckAt",
+      latest.analysis_status AS "lastStatus",
+      latest.latency_ms AS "lastLatencyMs",
+      latest.checked_at AS "lastCheckedAt"
+    FROM monitored_services m
+    LEFT JOIN LATERAL (
+      SELECT
+        h.analysis_status,
+        h.latency_ms,
+        h.checked_at
+      FROM analysis_history h
+      WHERE h.url = m.url
+      ORDER BY h.checked_at DESC
+      LIMIT 1
+    ) latest ON TRUE
+    ORDER BY m.id DESC
   `;
 
   const result = await pool.query<MonitoredService>(query);
@@ -71,7 +90,10 @@ export async function getDueMonitoredServices(): Promise<MonitoredService[]> {
       interval_seconds AS "intervalSeconds",
       is_active AS "isActive",
       created_at AS "createdAt",
-      next_check_at AS "nextCheckAt"
+      next_check_at AS "nextCheckAt",
+      NULL::text AS "lastStatus",
+      NULL::integer AS "lastLatencyMs",
+      NULL::timestamptz AS "lastCheckedAt"
     FROM monitored_services
     WHERE is_active = TRUE
       AND next_check_at <= NOW()

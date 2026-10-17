@@ -1,20 +1,20 @@
 
-const form = document.getElementById("analyze-form");
+const analyzeForm = document.getElementById("analyze-form");
 const urlInput = document.getElementById("url");
-const button = document.getElementById("analyze-button");
+const analyzeButton = document.getElementById("analyze-button");
 const message = document.getElementById("message");
-const results = document.getElementById("results");
 
+const resultsSection = document.getElementById("results");
 const statusValue = document.getElementById("status-value");
+const checkedAt = document.getElementById("checked-at");
+const statusDescription = document.getElementById("status-description");
 const httpValue = document.getElementById("http-value");
 const latencyValue = document.getElementById("latency-value");
-const statusDescription = document.getElementById("status-description");
 const summary = document.getElementById("summary");
 const recommendations = document.getElementById("recommendations");
-const checkedAt = document.getElementById("checked-at");
 
-const historyBody = document.getElementById("history-body");
 const historyMessage = document.getElementById("history-message");
+const historyBody = document.getElementById("history-body");
 const refreshHistoryButton = document.getElementById("refresh-history");
 
 const monitorForm = document.getElementById("monitor-form");
@@ -26,13 +26,249 @@ const monitorMessage = document.getElementById("monitor-message");
 const monitorsBody = document.getElementById("monitors-body");
 const refreshMonitorsButton = document.getElementById("refresh-monitors");
 
+function createCell(value) {
+  const cell = document.createElement("td");
+  cell.textContent = value ?? "—";
+  return cell;
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "—";
+
+  return date.toLocaleString("pt-BR");
+}
 
 function formatInterval(seconds) {
-  const minutes = seconds / 60;
+  if (!Number.isFinite(Number(seconds))) return "—";
 
-  return minutes === 1
-    ? "1 minuto"
-    : `${minutes} minutos`;
+  const value = Number(seconds);
+
+  if (value < 60) return `${value} segundos`;
+
+  const minutes = value / 60;
+
+  if (minutes % 60 === 0 && minutes >= 60) {
+    const hours = minutes / 60;
+    return hours === 1 ? "1 hora" : `${hours} horas`;
+  }
+
+  return minutes === 1 ? "1 minuto" : `${minutes} minutos`;
+}
+
+function statusClasses(status) {
+  const classes = {
+    UP: "status-up",
+    DEGRADED: "status-degraded",
+    DOWN: "status-down",
+  };
+
+  return classes[status] || "status-unknown";
+}
+
+function createStatusBadge(status, label) {
+  const badge = document.createElement("span");
+  badge.classList.add("status-badge", statusClasses(status));
+  badge.textContent = label;
+  return badge;
+}
+
+function displayStatus(status) {
+  const labels = {
+    UP: "UP",
+    DEGRADED: "DEGRADADO",
+    DOWN: "DOWN",
+  };
+
+  return labels[status] || "SEM HISTÓRICO";
+}
+
+analyzeForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const url = urlInput.value.trim();
+
+  if (!url) {
+    message.textContent = "Informe uma URL para analisar.";
+    return;
+  }
+
+  analyzeButton.disabled = true;
+  analyzeButton.textContent = "Analisando...";
+  message.textContent = "Verificando a aplicação...";
+  resultsSection.hidden = true;
+
+  try {
+    const response = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Não foi possível analisar a URL.");
+    }
+
+    const result = data.result;
+    const analysis = data.analysis;
+
+    statusValue.textContent = analysis.status;
+    statusDescription.textContent = analysis.summary || "";
+    checkedAt.textContent = formatDate(result.checkedAt);
+    httpValue.textContent = result.statusCode ?? "—";
+    latencyValue.textContent =
+      result.latencyMs != null ? `${result.latencyMs} ms` : "—";
+    summary.textContent = analysis.summary || "Nenhum resumo disponível.";
+
+    statusValue.className = "";
+    statusValue.classList.add(statusClasses(analysis.status));
+
+    recommendations.replaceChildren();
+
+    if (
+      Array.isArray(analysis.recommendations) &&
+      analysis.recommendations.length > 0
+    ) {
+      for (const recommendation of analysis.recommendations) {
+        const item = document.createElement("li");
+        item.textContent = recommendation;
+        recommendations.appendChild(item);
+      }
+    } else {
+      const item = document.createElement("li");
+      item.textContent = "Nenhuma recomendação disponível.";
+      recommendations.appendChild(item);
+    }
+
+    resultsSection.hidden = false;
+    message.textContent = "Análise concluída.";
+
+    await loadHistory();
+    await loadMonitors();
+  } catch (error) {
+    message.textContent =
+      error instanceof Error
+        ? error.message
+        : "Ocorreu um erro ao analisar a aplicação.";
+  } finally {
+    analyzeButton.disabled = false;
+    analyzeButton.textContent = "Analisar aplicação";
+  }
+});
+
+async function loadHistory() {
+  historyMessage.textContent = "Carregando histórico...";
+  refreshHistoryButton.disabled = true;
+
+  try {
+    const response = await fetch("/api/history");
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Não foi possível carregar o histórico.");
+    }
+
+    if (!Array.isArray(data.history)) {
+      throw new Error("A resposta do histórico é inválida.");
+    }
+
+    historyBody.replaceChildren();
+
+    if (data.history.length === 0) {
+      historyMessage.textContent = "Nenhuma análise registrada ainda.";
+      return;
+    }
+
+    for (const item of data.history) {
+      const row = document.createElement("tr");
+
+      row.appendChild(createCell(item.url));
+
+      const statusCell = document.createElement("td");
+      statusCell.appendChild(
+        createStatusBadge(item.analysisStatus, displayStatus(item.analysisStatus))
+      );
+      row.appendChild(statusCell);
+
+      row.appendChild(createCell(item.statusCode ?? "—"));
+      row.appendChild(
+        createCell(
+          item.latencyMs != null ? `${item.latencyMs} ms` : "—"
+        )
+      );
+      row.appendChild(createCell(formatDate(item.checkedAt || item.createdAt)));
+
+      historyBody.appendChild(row);
+    }
+
+    historyMessage.textContent =
+      `${data.history.length} análise(s) encontrada(s).`;
+  } catch (error) {
+    historyMessage.textContent =
+      error instanceof Error
+        ? error.message
+        : "Erro ao carregar o histórico.";
+  } finally {
+    refreshHistoryButton.disabled = false;
+  }
+}
+
+function renderMonitor(monitor) {
+  const row = document.createElement("tr");
+
+  row.appendChild(createCell(monitor.name || "—"));
+  row.appendChild(createCell(monitor.url || "—"));
+  row.appendChild(createCell(formatInterval(monitor.intervalSeconds)));
+
+  const lastStatusCell = document.createElement("td");
+
+  if (monitor.lastStatus) {
+    const statusLabel = displayStatus(monitor.lastStatus);
+    lastStatusCell.appendChild(
+      createStatusBadge(monitor.lastStatus, statusLabel)
+    );
+
+    if (monitor.lastLatencyMs != null) {
+      const latency = document.createElement("div");
+      latency.classList.add("monitor-latency");
+      latency.textContent = `${monitor.lastLatencyMs} ms`;
+      lastStatusCell.appendChild(latency);
+    }
+
+    if (monitor.lastCheckedAt) {
+      const date = document.createElement("div");
+      date.classList.add("monitor-last-checked");
+      date.textContent = formatDate(monitor.lastCheckedAt);
+      lastStatusCell.appendChild(date);
+    }
+  } else {
+    lastStatusCell.appendChild(
+      createStatusBadge("UNKNOWN", "SEM HISTÓRICO")
+    );
+  }
+
+  row.appendChild(lastStatusCell);
+
+  const monitoringCell = document.createElement("td");
+  const isActive = monitor.isActive === true;
+
+  monitoringCell.appendChild(
+    createStatusBadge(
+      isActive ? "UP" : "DOWN",
+      isActive ? "ATIVO" : "INATIVO"
+    )
+  );
+
+  row.appendChild(monitoringCell);
+
+  return row;
 }
 
 async function loadMonitors() {
@@ -62,29 +298,7 @@ async function loadMonitors() {
     }
 
     for (const monitor of data.monitors) {
-      const row = document.createElement("tr");
-
-      row.appendChild(createCell(monitor.name || "—"));
-      row.appendChild(createCell(monitor.url || "—"));
-      row.appendChild(
-        createCell(formatInterval(monitor.intervalSeconds))
-      );
-
-      const situationCell = document.createElement("td");
-      const badge = document.createElement("span");
-
-      badge.classList.add("status-badge");
-      badge.textContent = monitor.isActive
-        ? "ATIVO"
-        : "INATIVO";
-
-      badge.classList.add(
-        monitor.isActive ? "status-up" : "status-down"
-      );
-
-      situationCell.appendChild(badge);
-      row.appendChild(situationCell);
-      monitorsBody.appendChild(row);
+      monitorsBody.appendChild(renderMonitor(monitor));
     }
 
     monitorMessage.textContent =
@@ -99,226 +313,17 @@ async function loadMonitors() {
   }
 }
 
-
-const statusClasses = {
-  UP: "status-up",
-  DEGRADED: "status-degraded",
-  DOWN: "status-down"
-};
-
-function formatDate(value) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-
-  return date.toLocaleString("pt-BR");
-}
-
-function createCell(value) {
-  const cell = document.createElement("td");
-  cell.textContent = value;
-  return cell;
-}
-
-function createStatusCell(status) {
-  const cell = document.createElement("td");
-  const badge = document.createElement("span");
-
-  badge.textContent = status || "UNKNOWN";
-  badge.classList.add("status-badge");
-
-  const statusClass = statusClasses[status];
-
-  if (statusClass) {
-    badge.classList.add(statusClass);
-  }
-
-  cell.appendChild(badge);
-  return cell;
-}
-
-async function loadHistory() {
-  historyMessage.textContent = "Carregando histórico...";
-  refreshHistoryButton.disabled = true;
-
-  try {
-    const response = await fetch("/api/history");
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(
-        data.error || "Não foi possível carregar o histórico."
-      );
-    }
-
-    if (!Array.isArray(data.history)) {
-      throw new Error("O servidor retornou um histórico inválido.");
-    }
-
-    historyBody.replaceChildren();
-
-    if (data.history.length === 0) {
-      historyMessage.textContent =
-        "Nenhuma análise registrada ainda.";
-      return;
-    }
-
-    for (const item of data.history) {
-      const row = document.createElement("tr");
-
-      row.appendChild(createCell(item.url || "—"));
-      row.appendChild(createStatusCell(item.analysisStatus));
-      row.appendChild(createCell(
-        item.statusCode == null ? "—" : String(item.statusCode)
-      ));
-      row.appendChild(createCell(
-        typeof item.latencyMs === "number"
-          ? `${item.latencyMs} ms`
-          : "—"
-      ));
-      row.appendChild(createCell(formatDate(item.checkedAt)));
-
-      historyBody.appendChild(row);
-    }
-
-    historyMessage.textContent =
-      `${data.history.length} análise(s) encontrada(s).`;
-  } catch (error) {
-    historyMessage.textContent =
-      error instanceof Error
-        ? error.message
-        : "Erro ao carregar o histórico.";
-  } finally {
-    refreshHistoryButton.disabled = false;
-  }
-}
-
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const url = urlInput.value.trim();
-
-  let parsedUrl;
-
-  try {
-    parsedUrl = new URL(url);
-
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-      throw new Error("Protocolo inválido.");
-    }
-  } catch {
-    message.textContent =
-      "Informe uma URL válida começando com http:// ou https://.";
-    results.hidden = true;
-    return;
-  }
-
-  button.disabled = true;
-  button.textContent = "Analisando...";
-  message.textContent = "Verificando o site. Aguarde...";
-  results.hidden = true;
-
-  try {
-    const response = await fetch("/api/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ url: parsedUrl.toString() })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(
-        data.error || "Não foi possível analisar o site."
-      );
-    }
-
-    const result = data.result;
-    const analysis = data.analysis;
-
-    if (!result || !analysis) {
-      throw new Error("O servidor retornou uma resposta incompleta.");
-    }
-
-    statusValue.textContent = analysis.status || "UNKNOWN";
-
-    statusValue.classList.remove(
-      "status-up",
-      "status-degraded",
-      "status-down"
-    );
-
-    statusValue.classList.add(
-      statusClasses[analysis.status] || "status-down"
-    );
-
-    httpValue.textContent = result.statusCode ?? "—";
-
-    latencyValue.textContent =
-      typeof result.latencyMs === "number"
-        ? `${result.latencyMs} ms`
-        : "—";
-
-    statusDescription.textContent =
-      analysis.status === "UP"
-        ? "Serviço respondendo normalmente"
-        : analysis.status === "DEGRADED"
-          ? "Serviço com desempenho degradado"
-          : "Serviço com falha ou situação inesperada";
-
-    summary.textContent =
-      analysis.summary || "Não há diagnóstico disponível.";
-
-    recommendations.replaceChildren();
-
-    const items = Array.isArray(analysis.recommendations)
-      ? analysis.recommendations
-      : [];
-
-    if (items.length === 0) {
-      const item = document.createElement("li");
-      item.textContent = "Nenhuma recomendação disponível.";
-      recommendations.appendChild(item);
-    } else {
-      for (const recommendation of items) {
-        const item = document.createElement("li");
-        item.textContent = recommendation;
-        recommendations.appendChild(item);
-      }
-    }
-
-    checkedAt.textContent = `Verificado às ${formatDate(result.checkedAt)}`;
-
-    results.hidden = false;
-    message.textContent = "Análise concluída.";
-
-    await loadHistory();
-  } catch (error) {
-    message.textContent =
-      error instanceof Error
-        ? error.message
-        : "Ocorreu um erro inesperado.";
-  } finally {
-    button.disabled = false;
-    button.innerHTML = 'Analisar site <span>→</span>';
-  }
-});
-
-refreshHistoryButton.addEventListener("click", loadHistory);
-
-loadHistory();
-
-
 monitorForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const name = monitorNameInput.value.trim();
   const url = monitorUrlInput.value.trim();
   const intervalSeconds = Number(monitorIntervalInput.value);
+
+  if (!name) {
+    monitorMessage.textContent = "Informe o nome do serviço.";
+    return;
+  }
 
   let parsedUrl;
 
@@ -342,13 +347,13 @@ monitorForm.addEventListener("submit", async (event) => {
     const response = await fetch("/api/monitors", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         name,
         url: parsedUrl.toString(),
-        intervalSeconds
-      })
+        intervalSeconds,
+      }),
     });
 
     const data = await response.json();
@@ -362,8 +367,7 @@ monitorForm.addEventListener("submit", async (event) => {
     monitorForm.reset();
     monitorIntervalInput.value = "300";
 
-    monitorMessage.textContent =
-      "Serviço cadastrado com sucesso.";
+    monitorMessage.textContent = "Serviço cadastrado com sucesso.";
 
     await loadMonitors();
   } catch (error) {
@@ -377,7 +381,8 @@ monitorForm.addEventListener("submit", async (event) => {
   }
 });
 
+refreshHistoryButton.addEventListener("click", loadHistory);
 refreshMonitorsButton.addEventListener("click", loadMonitors);
 
+loadHistory();
 loadMonitors();
-
