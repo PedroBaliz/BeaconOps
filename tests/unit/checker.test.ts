@@ -1,0 +1,103 @@
+
+import { describe, it, expect, vi, afterEach } from "vitest";
+import axios from "axios";
+import { checkUrl } from "../../src/core/checker.js";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
+describe("checkUrl", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("retorna online para uma resposta HTTP 200", async () => {
+    vi.mocked(axios.get).mockResolvedValue({
+      status: 200,
+    } as never);
+
+    const result = await checkUrl("https://example.com");
+
+    expect(result.isOnline).toBe(true);
+    expect(result.statusCode).toBe(200);
+    expect(result.error).toBeNull();
+    expect(result.latencyMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it("identifica respostas HTTP 500", async () => {
+    vi.mocked(axios.get).mockResolvedValue({
+      status: 500,
+    } as never);
+
+    const result = await checkUrl("https://example.com");
+
+    expect(result.isOnline).toBe(true);
+    expect(result.statusCode).toBe(500);
+    expect(result.error).toContain("HTTP 500");
+  });
+
+  it("identifica timeout", async () => {
+    vi.mocked(axios.get).mockRejectedValue({
+      code: "ECONNABORTED",
+      message: "timeout",
+    });
+
+    const result = await checkUrl("https://example.com", 1000);
+
+    expect(result.isOnline).toBe(false);
+    expect(result.statusCode).toBeNull();
+    expect(result.error).toContain("Tempo limite excedido");
+    expect(result.error).toContain("1000 ms");
+  });
+
+  it("identifica domínio não encontrado", async () => {
+    vi.mocked(axios.get).mockRejectedValue({
+      code: "ENOTFOUND",
+      message: "getaddrinfo ENOTFOUND",
+    });
+
+    const result = await checkUrl("https://invalid.example");
+
+    expect(result.isOnline).toBe(false);
+    expect(result.error).toBe("O domínio não foi encontrado.");
+  });
+
+  it("identifica conexão recusada", async () => {
+    vi.mocked(axios.get).mockRejectedValue({
+      code: "ECONNREFUSED",
+      message: "connect ECONNREFUSED",
+    });
+
+    const result = await checkUrl("https://example.com");
+
+    expect(result.isOnline).toBe(false);
+    expect(result.error).toBe(
+      "A conexão foi recusada pelo servidor."
+    );
+  });
+
+  it("identifica URL inválida reportada pelo Axios", async () => {
+    vi.mocked(axios.get).mockRejectedValue({
+      code: "ERR_INVALID_URL",
+      message: "Invalid URL",
+    });
+
+    const result = await checkUrl("url-invalida");
+
+    expect(result.isOnline).toBe(false);
+    expect(result.error).toBe("A URL informada é inválida.");
+  });
+
+  it("inclui a data da verificação no resultado", async () => {
+    vi.mocked(axios.get).mockResolvedValue({
+      status: 204,
+    } as never);
+
+    const result = await checkUrl("https://example.com");
+
+    expect(Number.isNaN(Date.parse(result.checkedAt))).toBe(false);
+  });
+});
