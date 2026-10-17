@@ -3,6 +3,7 @@ import "dotenv/config";
 import analyzeRouter from "./api/analyze.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { startMonitor } from "./core/monitor.js";
 
 const app = express();
 
@@ -28,4 +29,5 @@ app.use("/api", analyzeRouter);
 
 app.listen(port, () => {
   console.log(`BeaconOps rodando em http://localhost:${port}`);
+  startMonitor();
 });
