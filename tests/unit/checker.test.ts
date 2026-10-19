@@ -1,13 +1,23 @@
 
 import { describe, it, expect, vi, afterEach } from "vitest";
 import axios from "axios";
-import { checkUrl } from "../../src/core/checker.js";
 
 vi.mock("axios", () => ({
   default: {
     get: vi.fn(),
   },
 }));
+
+vi.mock("../../src/core/safe-dns.js", () => ({
+  resolvePublicAddresses: vi.fn().mockResolvedValue([
+    {
+      address: "93.184.216.34",
+      family: 4,
+    },
+  ]),
+}));
+
+import { checkUrl } from "../../src/core/checker.js";
 
 describe("checkUrl", () => {
   afterEach(() => {
@@ -131,7 +141,7 @@ describe("checkUrl", () => {
     );
   });
 
-  it("configura um agente com lookup fixado para a conexão", async () => {
+  it("configura agentes HTTP e HTTPS", async () => {
     vi.mocked(axios.get).mockResolvedValue({
       status: 200,
     } as never);
@@ -140,8 +150,47 @@ describe("checkUrl", () => {
 
     const config = vi.mocked(axios.get).mock.calls[0]?.[1];
 
-    expect(config).toBeDefined();
     expect(config?.httpAgent).toBeDefined();
     expect(config?.httpsAgent).toBeDefined();
+  });
+
+  it("fixa o lookup HTTPS no IP público validado pelo DNS", async () => {
+    vi.mocked(axios.get).mockResolvedValue({
+      status: 200,
+    } as never);
+
+    await checkUrl("https://example.com");
+
+    const config = vi.mocked(axios.get).mock.calls[0]?.[1];
+
+    const agent = config?.httpsAgent as {
+      options: {
+        lookup?: (
+          hostname: string,
+          options: { all?: boolean },
+          callback: (...args: unknown[]) => void
+        ) => void;
+      };
+    };
+
+    const lookup = agent.options.lookup;
+
+    expect(lookup).toBeTypeOf("function");
+
+    let result: unknown[] = [];
+
+    lookup!(
+      "example.com",
+      {},
+      (...args) => {
+        result = args;
+      }
+    );
+
+    expect(result).toEqual([
+      null,
+      "93.184.216.34",
+      4,
+    ]);
   });
 });
