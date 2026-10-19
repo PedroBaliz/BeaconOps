@@ -34,8 +34,8 @@ export function validatePublicUrl(
   }
 
   const hostname = url.hostname
-    .toLowerCase()
-    .replace(/^\[|\]$/g, "");
+  .toLowerCase()
+  .replace(/^\[|\]$/g, "");
 
   if (
     hostname === "localhost" ||
