@@ -7,6 +7,7 @@ import {
   createMonitoredService,
   getMonitoredServices,
 } from "../db/monitored-services.js";
+import { validatePublicUrl } from "../core/url-validator.js";
 
 const router = Router();
 
@@ -37,27 +38,16 @@ router.post("/analyze", async (req, res) => {
       return;
     }
 
-    let parsedUrl: URL;
+    const validation = validatePublicUrl(url);
 
-    try {
-      parsedUrl = new URL(url.trim());
-    } catch {
+    if (!validation.ok) {
       res.status(400).json({
-        error: "O formato da URL é inválido.",
+        error: validation.error,
       });
       return;
     }
 
-    if (
-      parsedUrl.protocol !== "http:" &&
-      parsedUrl.protocol !== "https:"
-    ) {
-      res.status(400).json({
-        error: "A URL deve utilizar HTTP ou HTTPS.",
-      });
-      return;
-    }
-
+    const parsedUrl = new URL(url.trim());
     const result = await checkUrl(parsedUrl.toString());
     const analysis = analyzeResult(result);
 
@@ -116,26 +106,16 @@ router.post("/monitors", async (req, res) => {
     return;
   }
 
-  let parsedUrl: URL;
+  const validation = validatePublicUrl(url);
 
-  try {
-    parsedUrl = new URL(url.trim());
-  } catch {
+  if (!validation.ok) {
     res.status(400).json({
-      error: "O formato da URL é inválido.",
+      error: validation.error,
     });
     return;
   }
 
-  if (
-    parsedUrl.protocol !== "http:" &&
-    parsedUrl.protocol !== "https:"
-  ) {
-    res.status(400).json({
-      error: "A URL deve utilizar HTTP ou HTTPS.",
-    });
-    return;
-  }
+  const parsedUrl = new URL(url.trim());
 
   const interval =
     intervalSeconds === undefined ? 300 : intervalSeconds;
@@ -147,7 +127,8 @@ router.post("/monitors", async (req, res) => {
     interval > 86400
   ) {
     res.status(400).json({
-      error: "O intervalo deve ser um número inteiro entre 60 e 86400 segundos.",
+      error:
+        "O intervalo deve ser um número inteiro entre 60 e 86400 segundos.",
     });
     return;
   }

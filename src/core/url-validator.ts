@@ -10,12 +10,12 @@ export function validatePublicUrl(
 ): UrlValidationResult {
   let url: URL;
 
-  try {
+    try {
     url = new URL(input.trim());
   } catch {
     return {
       ok: false,
-      error: "A URL informada é inválida.",
+      error: "O formato da URL é inválido.",
     };
   }
 
