@@ -100,4 +100,48 @@ describe("checkUrl", () => {
 
     expect(Number.isNaN(Date.parse(result.checkedAt))).toBe(false);
   });
+
+  it.each([
+    "ftp://example.com",
+    "file:///etc/passwd",
+    "javascript:alert(1)",
+  ])("rejeita protocolo não permitido: %s", async (url) => {
+    const result = await checkUrl(url);
+
+    expect(result.isOnline).toBe(false);
+    expect(result.error).toBe(
+      "Apenas URLs HTTP e HTTPS são permitidas."
+    );
+    expect(axios.get).not.toHaveBeenCalled();
+  });
+
+  it("desativa redirecionamentos e proxies na requisição", async () => {
+    vi.mocked(axios.get).mockResolvedValue({
+      status: 200,
+    } as never);
+
+    await checkUrl("https://example.com");
+
+    expect(axios.get).toHaveBeenCalledWith(
+      "https://example.com",
+      expect.objectContaining({
+        maxRedirects: 0,
+        proxy: false,
+      })
+    );
+  });
+
+  it("configura um agente com lookup fixado para a conexão", async () => {
+    vi.mocked(axios.get).mockResolvedValue({
+      status: 200,
+    } as never);
+
+    await checkUrl("https://example.com");
+
+    const config = vi.mocked(axios.get).mock.calls[0]?.[1];
+
+    expect(config).toBeDefined();
+    expect(config?.httpAgent).toBeDefined();
+    expect(config?.httpsAgent).toBeDefined();
+  });
 });
