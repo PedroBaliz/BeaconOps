@@ -154,43 +154,63 @@ describe("checkUrl", () => {
     expect(config?.httpsAgent).toBeDefined();
   });
 
-  it("fixa o lookup HTTPS no IP público validado pelo DNS", async () => {
-    vi.mocked(axios.get).mockResolvedValue({
-      status: 200,
-    } as never);
+  it.each([
+    {
+      protocol: "https",
+      agentKey: "httpsAgent",
+    },
+    {
+      protocol: "http",
+      agentKey: "httpAgent",
+    },
+  ])(
+    "fixa o lookup do agente $protocol no IP público validado pelo DNS",
+    async ({ protocol, agentKey }) => {
+      vi.mocked(axios.get).mockResolvedValue({
+        status: 200,
+      } as never);
 
-    await checkUrl("https://example.com");
+      await checkUrl(`${protocol}://example.com`);
 
-    const config = vi.mocked(axios.get).mock.calls[0]?.[1];
+      const config = vi.mocked(axios.get).mock.calls[0]?.[1];
 
-    const agent = config?.httpsAgent as {
-      options: {
-        lookup?: (
-          hostname: string,
-          options: { all?: boolean },
-          callback: (...args: unknown[]) => void
-        ) => void;
-      };
-    };
+      const configRecord = config as
+        | Record<string, unknown>
+        | undefined;
 
-    const lookup = agent.options.lookup;
+      const agent = configRecord?.[agentKey] as
+        | {
+            options: {
+              lookup?: (
+                hostname: string,
+                options: unknown,
+                callback: (...args: any[]) => void
+              ) => void;
+            };
+          }
+        | undefined;
 
-    expect(lookup).toBeTypeOf("function");
+      expect(agent).toBeDefined();
 
-    let result: unknown[] = [];
+      const lookup = agent?.options.lookup;
 
-    lookup!(
-      "example.com",
-      {},
-      (...args) => {
-        result = args;
-      }
-    );
+      expect(lookup).toBeTypeOf("function");
 
-    expect(result).toEqual([
-      null,
-      "93.184.216.34",
-      4,
-    ]);
-  });
+      let result: unknown[] = [];
+
+      lookup!(
+        "example.com",
+        {},
+        (...args: unknown[]) => {
+          result = args;
+        }
+      );
+
+      expect(result).toEqual([
+        null,
+        "93.184.216.34",
+        4,
+      ]);
+    }
+  );
 });
