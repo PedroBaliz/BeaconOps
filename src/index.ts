@@ -27,7 +27,7 @@ app.get("/", (_req, res) => {
 
 app.use("/api", analyzeRouter);
 
-app.listen(port, () => {
-  console.log(`BeaconOps rodando em http://localhost:${port}`);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`BeaconOps rodando na porta ${port}`);
   startMonitor();
 });
