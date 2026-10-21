@@ -1,4 +1,3 @@
-
 const analyzeForm = document.getElementById("analyze-form");
 const urlInput = document.getElementById("url");
 const analyzeButton = document.getElementById("analyze-button");
@@ -26,6 +25,42 @@ const monitorMessage = document.getElementById("monitor-message");
 const monitorsBody = document.getElementById("monitors-body");
 const refreshMonitorsButton = document.getElementById("refresh-monitors");
 
+const monitorDetailsSection = document.getElementById(
+  "monitor-details-section"
+);
+const selectedMonitorName = document.getElementById("selected-monitor-name");
+const selectedMonitorUrl = document.getElementById("selected-monitor-url");
+const selectedMonitorStatus = document.getElementById(
+  "selected-monitor-status"
+);
+const selectedMonitorLatency = document.getElementById(
+  "selected-monitor-latency"
+);
+const selectedMonitorInterval = document.getElementById(
+  "selected-monitor-interval"
+);
+const selectedMonitorCheckedAt = document.getElementById(
+  "selected-monitor-checked-at"
+);
+const closeMonitorDetailsButton = document.getElementById(
+  "close-monitor-details"
+);
+
+const editIntervalForm = document.getElementById("edit-interval-form");
+const editMonitorIntervalInput = document.getElementById(
+  "edit-monitor-interval"
+);
+const saveIntervalButton = document.getElementById("save-interval-button");
+const editIntervalMessage = document.getElementById("edit-interval-message");
+
+const selectedHistoryMessage = document.getElementById(
+  "selected-history-message"
+);
+const selectedHistoryBody = document.getElementById("selected-history-body");
+
+let selectedMonitorId = null;
+let selectedMonitorUrlValue = null;
+
 function createCell(value) {
   const cell = document.createElement("td");
   cell.textContent = value ?? "—";
@@ -47,7 +82,9 @@ function formatInterval(seconds) {
 
   const value = Number(seconds);
 
-  if (value < 60) return `${value} segundos`;
+  if (value < 60) {
+    return `${value} segundos`;
+  }
 
   const minutes = value / 60;
 
@@ -73,6 +110,7 @@ function createStatusBadge(status, label) {
   const badge = document.createElement("span");
   badge.classList.add("status-badge", statusClasses(status));
   badge.textContent = label;
+
   return badge;
 }
 
@@ -84,6 +122,23 @@ function displayStatus(status) {
   };
 
   return labels[status] || "SEM HISTÓRICO";
+}
+
+function ensureIntervalOption(select, seconds) {
+  const value = String(seconds);
+
+  const exists = Array.from(select.options).some(
+    (option) => option.value === value
+  );
+
+  if (!exists) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = formatInterval(seconds);
+    select.appendChild(option);
+  }
+
+  select.value = value;
 }
 
 analyzeForm.addEventListener("submit", async (event) => {
@@ -152,6 +207,10 @@ analyzeForm.addEventListener("submit", async (event) => {
 
     await loadHistory();
     await loadMonitors();
+
+    if (selectedMonitorId !== null) {
+      await loadSelectedMonitorHistory();
+    }
   } catch (error) {
     message.textContent =
       error instanceof Error
@@ -159,7 +218,7 @@ analyzeForm.addEventListener("submit", async (event) => {
         : "Ocorreu um erro ao analisar a aplicação.";
   } finally {
     analyzeButton.disabled = false;
-    analyzeButton.textContent = "Analisar aplicação";
+    analyzeButton.textContent = "Analisar";
   }
 });
 
@@ -183,7 +242,7 @@ async function loadHistory() {
 
     if (data.history.length === 0) {
       historyMessage.textContent = "Nenhuma análise registrada ainda.";
-      return;
+      return data.history;
     }
 
     for (const item of data.history) {
@@ -193,7 +252,10 @@ async function loadHistory() {
 
       const statusCell = document.createElement("td");
       statusCell.appendChild(
-        createStatusBadge(item.analysisStatus, displayStatus(item.analysisStatus))
+        createStatusBadge(
+          item.analysisStatus,
+          displayStatus(item.analysisStatus)
+        )
       );
       row.appendChild(statusCell);
 
@@ -203,18 +265,24 @@ async function loadHistory() {
           item.latencyMs != null ? `${item.latencyMs} ms` : "—"
         )
       );
-      row.appendChild(createCell(formatDate(item.checkedAt || item.createdAt)));
+      row.appendChild(
+        createCell(formatDate(item.checkedAt || item.createdAt))
+      );
 
       historyBody.appendChild(row);
     }
 
     historyMessage.textContent =
       `${data.history.length} análise(s) encontrada(s).`;
+
+    return data.history;
   } catch (error) {
     historyMessage.textContent =
       error instanceof Error
         ? error.message
         : "Erro ao carregar o histórico.";
+
+    return [];
   } finally {
     refreshHistoryButton.disabled = false;
   }
@@ -223,6 +291,10 @@ async function loadHistory() {
 function renderMonitor(monitor) {
   const row = document.createElement("tr");
 
+  if (Number(monitor.id) === selectedMonitorId) {
+    row.classList.add("selected-monitor-row");
+  }
+
   row.appendChild(createCell(monitor.name || "—"));
   row.appendChild(createCell(monitor.url || "—"));
   row.appendChild(createCell(formatInterval(monitor.intervalSeconds)));
@@ -230,9 +302,11 @@ function renderMonitor(monitor) {
   const lastStatusCell = document.createElement("td");
 
   if (monitor.lastStatus) {
-    const statusLabel = displayStatus(monitor.lastStatus);
     lastStatusCell.appendChild(
-      createStatusBadge(monitor.lastStatus, statusLabel)
+      createStatusBadge(
+        monitor.lastStatus,
+        displayStatus(monitor.lastStatus)
+      )
     );
 
     if (monitor.lastLatencyMs != null) {
@@ -267,6 +341,20 @@ function renderMonitor(monitor) {
   );
 
   row.appendChild(monitoringCell);
+
+  const actionsCell = document.createElement("td");
+  const detailsButton = document.createElement("button");
+
+  detailsButton.type = "button";
+  detailsButton.classList.add("secondary-button");
+  detailsButton.textContent = "Ver detalhes";
+
+  detailsButton.addEventListener("click", () => {
+    showMonitorDetails(monitor.id);
+  });
+
+  actionsCell.appendChild(detailsButton);
+  row.appendChild(actionsCell);
 
   return row;
 }
@@ -310,6 +398,139 @@ async function loadMonitors() {
         : "Erro ao carregar os serviços.";
   } finally {
     refreshMonitorsButton.disabled = false;
+  }
+}
+
+async function showMonitorDetails(id) {
+  selectedMonitorId = Number(id);
+  monitorDetailsSection.hidden = false;
+
+  selectedMonitorName.textContent = "Carregando serviço...";
+  selectedMonitorUrl.textContent = "";
+  selectedHistoryMessage.textContent = "Carregando histórico do serviço...";
+  selectedHistoryBody.replaceChildren();
+  editIntervalMessage.textContent = "";
+
+  monitorDetailsSection.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+
+  try {
+    const response = await fetch(`/api/monitors/${selectedMonitorId}`);
+    const data = await response.json();
+
+    if (!response.ok || !data.success || !data.monitor) {
+      throw new Error(
+        data.error || "Não foi possível carregar o serviço."
+      );
+    }
+
+    const monitor = data.monitor;
+
+    selectedMonitorId = Number(monitor.id);
+    selectedMonitorUrlValue = monitor.url;
+
+    selectedMonitorName.textContent = monitor.name;
+    selectedMonitorUrl.textContent = monitor.url;
+
+    selectedMonitorStatus.replaceChildren();
+    selectedMonitorStatus.appendChild(
+      createStatusBadge(
+        monitor.lastStatus,
+        displayStatus(monitor.lastStatus)
+      )
+    );
+
+    selectedMonitorLatency.textContent =
+      monitor.lastLatencyMs != null
+        ? `${monitor.lastLatencyMs} ms`
+        : "Sem dados";
+
+    selectedMonitorInterval.textContent = formatInterval(
+      monitor.intervalSeconds
+    );
+
+    selectedMonitorCheckedAt.textContent = formatDate(
+      monitor.lastCheckedAt
+    );
+
+    ensureIntervalOption(
+      editMonitorIntervalInput,
+      monitor.intervalSeconds
+    );
+
+    await loadSelectedMonitorHistory();
+    await loadMonitors();
+  } catch (error) {
+    selectedMonitorName.textContent = "Erro ao carregar serviço";
+    selectedHistoryMessage.textContent =
+      error instanceof Error
+        ? error.message
+        : "Não foi possível consultar os dados do serviço.";
+  }
+}
+
+async function loadSelectedMonitorHistory() {
+  if (!selectedMonitorUrlValue) {
+    selectedHistoryMessage.textContent =
+      "Não foi possível identificar a URL do serviço.";
+    return;
+  }
+
+  selectedHistoryMessage.textContent = "Carregando histórico...";
+  selectedHistoryBody.replaceChildren();
+
+  try {
+    const response = await fetch("/api/history");
+    const data = await response.json();
+
+    if (!response.ok || !data.success || !Array.isArray(data.history)) {
+      throw new Error("Não foi possível carregar o histórico do serviço.");
+    }
+
+    const history = data.history.filter(
+      (item) => item.url === selectedMonitorUrlValue
+    );
+
+    if (history.length === 0) {
+      selectedHistoryMessage.textContent =
+        "Nenhuma análise encontrada para este serviço.";
+      return;
+    }
+
+    for (const item of history) {
+      const row = document.createElement("tr");
+
+      const statusCell = document.createElement("td");
+      statusCell.appendChild(
+        createStatusBadge(
+          item.analysisStatus,
+          displayStatus(item.analysisStatus)
+        )
+      );
+
+      row.appendChild(statusCell);
+      row.appendChild(createCell(item.statusCode ?? "—"));
+      row.appendChild(
+        createCell(
+          item.latencyMs != null ? `${item.latencyMs} ms` : "—"
+        )
+      );
+      row.appendChild(
+        createCell(formatDate(item.checkedAt || item.createdAt))
+      );
+
+      selectedHistoryBody.appendChild(row);
+    }
+
+    selectedHistoryMessage.textContent =
+      `${history.length} registro(s) encontrado(s) para este serviço.`;
+  } catch (error) {
+    selectedHistoryMessage.textContent =
+      error instanceof Error
+        ? error.message
+        : "Erro ao carregar o histórico individual.";
   }
 }
 
@@ -377,11 +598,85 @@ monitorForm.addEventListener("submit", async (event) => {
         : "Erro ao cadastrar o serviço.";
   } finally {
     monitorSubmitButton.disabled = false;
-    monitorSubmitButton.textContent = "Cadastrar serviço";
+    monitorSubmitButton.textContent = "Cadastrar";
   }
 });
 
-refreshHistoryButton.addEventListener("click", loadHistory);
+editIntervalForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (selectedMonitorId === null) {
+    editIntervalMessage.textContent = "Selecione um serviço primeiro.";
+    return;
+  }
+
+  const intervalSeconds = Number(editMonitorIntervalInput.value);
+
+  if (
+    !Number.isInteger(intervalSeconds) ||
+    intervalSeconds < 60 ||
+    intervalSeconds > 86400
+  ) {
+    editIntervalMessage.textContent =
+      "Selecione um intervalo entre 1 minuto e 24 horas.";
+    return;
+  }
+
+  saveIntervalButton.disabled = true;
+  saveIntervalButton.textContent = "Salvando...";
+  editIntervalMessage.textContent = "Atualizando intervalo...";
+
+  try {
+    const response = await fetch(
+      `/api/monitors/${selectedMonitorId}/interval`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ intervalSeconds }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.error || "Não foi possível atualizar o intervalo."
+      );
+    }
+
+    editIntervalMessage.textContent =
+      "Intervalo atualizado com sucesso.";
+
+    await showMonitorDetails(selectedMonitorId);
+    await loadMonitors();
+  } catch (error) {
+    editIntervalMessage.textContent =
+      error instanceof Error
+        ? error.message
+        : "Erro ao atualizar o intervalo.";
+  } finally {
+    saveIntervalButton.disabled = false;
+    saveIntervalButton.textContent = "Salvar intervalo";
+  }
+});
+
+closeMonitorDetailsButton.addEventListener("click", () => {
+  monitorDetailsSection.hidden = true;
+  selectedMonitorId = null;
+  selectedMonitorUrlValue = null;
+  loadMonitors();
+});
+
+refreshHistoryButton.addEventListener("click", async () => {
+  await loadHistory();
+
+  if (selectedMonitorId !== null) {
+    await loadSelectedMonitorHistory();
+  }
+});
+
 refreshMonitorsButton.addEventListener("click", loadMonitors);
 
 loadHistory();

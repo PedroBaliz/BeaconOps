@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -22,6 +21,7 @@
     <section class="hero">
       <span class="eyebrow">ANÁLISE EM TEMPO REAL</span>
       <h1>Monitoramento de sites e APIs</h1>
+      <p>Acompanhe a disponibilidade, o desempenho e o histórico das suas aplicações.</p>
     </section>
 
     <section class="analysis-section">
@@ -124,15 +124,13 @@
 
         <div class="monitor-field">
           <label for="monitor-interval">Intervalo</label>
-          <select
-            id="monitor-interval"
-            name="intervalSeconds"
-            required
-          >
+          <select id="monitor-interval" name="intervalSeconds" required>
             <option value="60">1 minuto</option>
+            <option value="120">2 minutos</option>
             <option value="300" selected>5 minutos</option>
             <option value="600">10 minutos</option>
             <option value="1800">30 minutos</option>
+            <option value="3600">1 hora</option>
           </select>
         </div>
 
@@ -154,6 +152,7 @@
               <th scope="col">Intervalo</th>
               <th scope="col">Último status</th>
               <th scope="col">Monitoramento</th>
+              <th scope="col">Ações</th>
             </tr>
           </thead>
           <tbody id="monitors-body"></tbody>
@@ -161,10 +160,93 @@
       </div>
     </section>
 
+    <section id="monitor-details-section" class="analysis-section" hidden>
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">VISÃO INDIVIDUAL</span>
+          <h2 id="selected-monitor-name">Detalhes do serviço</h2>
+        </div>
+        <button
+          id="close-monitor-details"
+          type="button"
+          class="secondary-button"
+        >
+          Fechar detalhes
+        </button>
+      </div>
+
+      <p id="selected-monitor-url"></p>
+
+      <div class="metrics-grid">
+        <article class="metric-card">
+          <span>Status atual</span>
+          <strong id="selected-monitor-status">—</strong>
+        </article>
+        <article class="metric-card">
+          <span>Última latência</span>
+          <strong id="selected-monitor-latency">—</strong>
+        </article>
+        <article class="metric-card">
+          <span>Intervalo atual</span>
+          <strong id="selected-monitor-interval">—</strong>
+        </article>
+        <article class="metric-card">
+          <span>Última verificação</span>
+          <strong id="selected-monitor-checked-at">—</strong>
+        </article>
+      </div>
+
+      <form id="edit-interval-form" class="monitor-form">
+        <div class="monitor-field">
+          <label for="edit-monitor-interval">Novo intervalo</label>
+          <select id="edit-monitor-interval" name="intervalSeconds" required>
+            <option value="60">1 minuto</option>
+            <option value="120">2 minutos</option>
+            <option value="300">5 minutos</option>
+            <option value="600">10 minutos</option>
+            <option value="1800">30 minutos</option>
+            <option value="3600">1 hora</option>
+            <option value="86400">24 horas</option>
+          </select>
+        </div>
+
+        <button id="save-interval-button" type="submit">
+          Salvar intervalo
+        </button>
+      </form>
+
+      <p id="edit-interval-message" role="status" aria-live="polite"></p>
+
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">REGISTROS DO SERVIÇO</span>
+          <h3>Histórico individual</h3>
+        </div>
+      </div>
+
+      <p id="selected-history-message" role="status" aria-live="polite">
+        Selecione um serviço para consultar o histórico.
+      </p>
+
+      <div class="history-table-wrap">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th scope="col">Status</th>
+              <th scope="col">HTTP</th>
+              <th scope="col">Latência</th>
+              <th scope="col">Data</th>
+            </tr>
+          </thead>
+          <tbody id="selected-history-body"></tbody>
+        </table>
+      </div>
+    </section>
+
     <section id="history-section" class="history-section">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">REGISTROS</span>
+          <span class="eyebrow">REGISTROS GERAIS</span>
           <h2>Histórico de análises</h2>
         </div>
         <button

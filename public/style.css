@@ -644,3 +644,182 @@ select:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+/* Descrição da página */
+.hero > p {
+  max-width: 650px;
+  margin: 0 auto;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Botões de ação da tabela de monitores */
+#monitors-section .history-table td:last-child {
+  white-space: nowrap;
+}
+
+#monitors-section .history-table td:last-child button {
+  padding: 9px 12px;
+  font-size: 12px;
+}
+
+/* Detalhes do monitor selecionado */
+#monitor-details-section {
+  margin-top: 28px;
+  scroll-margin-top: 24px;
+}
+
+#monitor-details-section .section-heading {
+  align-items: flex-start;
+}
+
+#monitor-details-section .section-heading h2 {
+  overflow-wrap: anywhere;
+}
+
+#close-monitor-details {
+  flex-shrink: 0;
+}
+
+/* Informações do monitor */
+.monitor-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.monitor-detail-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #152138, #111a2c);
+}
+
+.monitor-detail-card span {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.monitor-detail-card strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+#selected-monitor-url {
+  overflow-wrap: anywhere;
+}
+
+/* Formulário para editar o intervalo */
+#edit-interval-form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: #0b122166;
+}
+
+#edit-interval-form .monitor-field {
+  flex: 1;
+  min-width: 180px;
+}
+
+#edit-monitor-interval {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #34435e;
+  border-radius: 9px;
+  background: #0b1221;
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+#save-interval-button {
+  min-height: 42px;
+}
+
+#edit-interval-message,
+#selected-history-message {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+#edit-interval-message {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+/* Histórico individual */
+#selected-history-section {
+  margin-top: 28px;
+}
+
+#selected-history-body td:first-child {
+  min-width: 150px;
+}
+
+/* Evita que conteúdos longos estourem os painéis */
+#monitor-details-section,
+#monitor-details-section * {
+  min-width: 0;
+}
+
+#monitor-details-section .history-table-wrap {
+  max-width: 100%;
+}
+
+/* Ajustes para telas menores */
+@media (max-width: 700px) {
+  .monitor-details-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  #edit-interval-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #edit-interval-form .monitor-field {
+    width: 100%;
+  }
+
+  #save-interval-button {
+    width: 100%;
+  }
+
+  #monitor-details-section .section-heading {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero > p {
+    font-size: 13px;
+  }
+
+  .monitor-detail-card {
+    padding: 15px;
+  }
+
+  #monitor-details-section .section-heading {
+    gap: 10px;
+  }
+
+  #close-monitor-details {
+    padding: 9px 10px;
+    font-size: 11px;
+  }
+}
