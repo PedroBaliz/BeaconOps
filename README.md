@@ -1,37 +1,110 @@
 # BeaconOps
 
-BeaconOps is a web application for analyzing HTTP endpoints and monitoring service availability and performance. It provides on-demand URL analysis, automated monitoring, health assessments, and historical data storage.
+BeaconOps is a web application for analyzing HTTP endpoints and monitoring service availability and performance.
+
+It provides on-demand URL analysis, response latency measurement, health assessments, scheduled monitoring, and historical data storage using PostgreSQL.
+
+The project combines backend development, HTTP communication, security-oriented URL validation, relational database design, automated testing, and Docker containerization.
+
+---
 
 ## Features
 
-- On-demand HTTP endpoint analysis.
-- Response time measurement in milliseconds.
-- Service availability and HTTP status monitoring.
-- Health classification and recommendations.
-- Automated monitoring with scheduled checks.
-- Analysis history stored in PostgreSQL.
-- Monitored service registration and management.
-- Web interface for interacting with the application.
-- URL validation and DNS safety checks.
-- Automated unit and integration tests.
-- Docker-based deployment.
+- On-demand HTTP endpoint analysis
+- Response latency measurement in milliseconds
+- HTTP status and availability monitoring
+- Health classification and recommendations
+- Automated monitoring of registered services
+- Analysis history stored in PostgreSQL
+- Monitored service registration and management
+- URL validation and DNS safety checks
+- Automated unit and integration tests
+- Docker-based execution
+
+---
 
 ## Architecture
 
-BeaconOps uses a modular architecture that separates the user interface, API, core business logic, and database operations.
+BeaconOps uses a modular architecture built with Node.js, TypeScript, and Express.
 
-The application follows this general flow:
+```text
+Web Interface
+     |
+     v
+Express API
+     |
+     v
+URL Validation and DNS Safety
+     |
+     v
+HTTP Checker
+     |
+     v
+Health Analyzer
+     |
+     v
+PostgreSQL
+```
 
-1. **Frontend:** The files in `public/` provide the web interface using HTML, CSS, and JavaScript.
-2. **API:** The Express server receives HTTP requests and routes them to the appropriate application functionality.
-3. **URL validation and security:** The validation components check submitted URLs and perform DNS-related safety checks before the application connects to external endpoints.
-4. **HTTP checker:** The checker sends HTTP requests and collects response status, latency, and error information.
-5. **Health analyzer:** The analyzer evaluates the check results and produces a health classification, summary, and recommendations.
-6. **Automated monitor:** A scheduled task uses `node-cron` to check registered services according to their configured intervals.
-7. **Database layer:** PostgreSQL stores analysis history and registered services, including scheduling information.
-8. **Testing and deployment:** Vitest and Supertest support automated testing, while Docker and Docker Compose provide containerized execution.
+Automated monitoring runs through a separate scheduled process coordinated by `node-cron`, which checks registered services according to their configured intervals.
 
-### Project Structure
+### Design Decisions
+
+**Modular application structure**
+
+API handling, HTTP checks, health assessment, scheduled monitoring, and database operations are separated into dedicated modules. This improves maintainability and allows individual components to be tested independently.
+
+**Separation of checking and analysis**
+
+The HTTP checker collects response data, while the health analyzer interprets the results and generates assessments. This separates data collection from business logic.
+
+**Scheduled monitoring**
+
+`node-cron` coordinates recurring checks independently of on-demand analysis requests, allowing registered services to be monitored over time.
+
+**Security-oriented URL handling**
+
+URL validation and DNS safety checks are handled separately from HTTP communication to help reduce risks associated with user-controlled destinations.
+
+---
+
+## Database
+
+BeaconOps uses PostgreSQL to persist analysis history and registered services.
+
+The database layer separates connection management, history operations, and monitored service management into dedicated modules.
+
+## Security
+
+The application includes URL validation and DNS-related safety checks before making outbound HTTP requests. These mechanisms help reduce risks associated with unsafe destinations.
+
+Because URL validation alone does not prevent every form of server-side request forgery (SSRF), protection also depends on how IP addresses, DNS resolution, redirects, and outbound connections are handled.
+
+Sensitive configuration, including database credentials, should be provided through environment variables rather than committed to version control.
+
+---
+
+## Technology Stack
+
+**Languages:** TypeScript, JavaScript, HTML, CSS, SQL
+
+**Backend:** Node.js, Express
+
+**HTTP Requests:** Axios
+
+**Database:** PostgreSQL
+
+**Scheduling:** node-cron
+
+**Testing:** Vitest, Supertest
+
+**Containerization:** Docker, Docker Compose
+
+**Configuration:** dotenv
+
+---
+
+## Project Structure
 
 ```text
 BeaconOps/
@@ -41,21 +114,9 @@ BeaconOps/
 │   └── style.css
 ├── src/
 │   ├── api/
-│   │   └── analyze.ts
 │   ├── core/
-│   │   ├── analyzer.ts
-│   │   ├── checker.ts
-│   │   ├── monitor.ts
-│   │   ├── safe-dns.ts
-│   │   ├── types.ts
-│   │   └── url-validator.ts
 │   ├── db/
-│   │   ├── history.ts
-│   │   ├── monitored-services.ts
-│   │   ├── pool.ts
-│   │   └── test-connection.ts
 │   ├── utils/
-│   │   └── logger.ts
 │   └── index.ts
 ├── tests/
 │   ├── unit/
@@ -69,91 +130,92 @@ BeaconOps/
 
 ### Main Components
 
-- **`src/index.ts`:** Application entry point and server initialization.
-- **`src/api/`:** API routes and request handling.
-- **`src/core/checker.ts`:** Performs HTTP checks and measures response latency.
-- **`src/core/analyzer.ts`:** Interprets check results and generates health assessments.
-- **`src/core/monitor.ts`:** Coordinates scheduled service monitoring.
-- **`src/core/url-validator.ts`:** Validates submitted URLs.
-- **`src/core/safe-dns.ts`:** Implements DNS-related safety checks.
-- **`src/db/`:** Handles database connections, analysis history, and monitored services.
-- **`public/`:** Contains the web interface.
-- **`tests/`:** Contains unit and integration tests.
+- `src/api/` — API routes and request handling.
+- `src/core/checker.ts` — HTTP requests and latency measurement.
+- `src/core/analyzer.ts` — health assessments and recommendations.
+- `src/core/monitor.ts` — scheduled monitoring.
+- `src/core/url-validator.ts` — URL validation.
+- `src/core/safe-dns.ts` — DNS-related safety checks.
+- `src/db/` — PostgreSQL connections and data operations.
+- `public/` — web interface.
+- `tests/` — automated unit and integration tests.
 
-## Technology Stack
+---
 
-| Technology | Purpose |
-|---|---|
-| Node.js | Runtime environment |
-| TypeScript | Type-safe application development |
-| Express | HTTP server and API |
-| Axios | HTTP requests |
-| PostgreSQL | Data persistence |
-| node-cron | Scheduled monitoring |
-| Vitest | Automated testing |
-| Supertest | HTTP integration testing |
-| Docker | Containerization |
-| Docker Compose | Container orchestration |
-| dotenv | Environment configuration |
+## API
 
-## Requirements
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/analyze` | Analyzes a URL |
+| `GET` | `/api/history` | Retrieves recent analysis history |
+| `GET` | `/api/monitors` | Lists monitored services |
+| `POST` | `/api/monitors` | Registers a monitored service |
 
-- Node.js 22 or a compatible version.
-- npm.
-- PostgreSQL.
-- Docker Desktop and Docker Compose for containerized deployment.
+### Example Request
 
-## Getting Started
+```json
+{
+  "url": "https://example.com"
+}
+```
 
-### 1. Clone the repository
+Send the request to `POST /api/analyze` with a JSON content type. The response includes information such as HTTP status, latency, availability, and analysis results.
+
+---
+
+## Running Locally
+
+### Requirements
+
+- Node.js 22 or a compatible version
+- npm
+- PostgreSQL
+
+### 1. Clone the Repository
 
 ```bash
 git clone <YOUR_REPOSITORY_URL>
 cd BeaconOps
 ```
 
-Replace `<YOUR_REPOSITORY_URL>` with the repository's actual URL.
-
-### 2. Install dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
+### 3. Configure Environment Variables
 
-Create a `.env` file in the project root using `.env.example` as a reference.
-
-Configure your PostgreSQL connection:
+Create a `.env` file based on `.env.example`.
 
 ```dotenv
 PORT=3000
 DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/beaconops
 ```
 
-Replace the placeholders with your local database credentials. Ensure the database exists before starting the application.
+Replace the placeholders with your PostgreSQL credentials and ensure the database exists.
 
-Never commit your `.env` file or expose database credentials.
-
-### 4. Start the development server
+### 4. Start the Application
 
 ```bash
 npm run dev
 ```
 
-The application runs on port `3000` by default, depending on the configured environment.
+The server uses port `3000` by default, depending on the environment configuration.
 
-## Docker Deployment
+---
 
-Configure `DATABASE_URL_DOCKER` in your `.env` file if using the current Docker Compose configuration. When PostgreSQL runs on the host machine, the connection can use `host.docker.internal`.
+## Running with Docker
 
-Build and start the application:
+Configure the environment variables required by `compose.yaml`, including the appropriate PostgreSQL connection string.
+
+Build and start the containers:
 
 ```bash
 docker compose up --build -d
 ```
 
-Check the container status:
+Check container status:
 
 ```bash
 docker compose ps
@@ -165,48 +227,15 @@ View application logs:
 docker compose logs --tail=50 app
 ```
 
-Stop the application:
+Stop the containers:
 
 ```bash
 docker compose down
 ```
 
-## API Endpoints
+---
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/analyze` | Analyze a URL |
-| `GET` | `/api/history` | Retrieve recent analysis history |
-| `GET` | `/api/monitors` | List monitored services |
-| `POST` | `/api/monitors` | Register a monitored service |
-
-### Example: Analyze a URL
-
-Request body:
-
-```json
-{
-  "url": "https://example.com"
-}
-```
-
-PowerShell example:
-
-```powershell
-$body = @{
-    url = "https://example.com"
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-    -Uri "http://localhost:3000/api/analyze" `
-    -Method Post `
-    -ContentType "application/json" `
-    -Body $body
-```
-
-The response includes information such as the URL, HTTP status code, response latency, availability, and analysis results.
-
-## Testing and Validation
+## Testing
 
 Run the automated tests:
 
@@ -232,19 +261,19 @@ Build the application:
 npm run build
 ```
 
+These commands require the corresponding scripts to be configured in `package.json`.
+
+---
+
 ## Future Improvements
 
-- Authentication and user management.
-- Notification integrations.
-- Performance charts and historical metrics.
-- Improved monitoring execution diagnostics.
-- Continuous integration and deployment.
-- Expanded API documentation.
+- Service failure notifications
+- Historical performance charts and availability statistics
+- Improved monitoring diagnostics
+- Continuous integration and deployment
 
-## Project Status
-
-BeaconOps is a portfolio project focused on HTTP endpoint analysis, service availability monitoring, scheduled checks, PostgreSQL persistence, automated testing, and containerized deployment.
+---
 
 ## License
 
-The project declares the ISC license in `package.json`. Include a `LICENSE` file in the repository if distributing the project under that license.
+The project declares the ISC license in `package.json`.
