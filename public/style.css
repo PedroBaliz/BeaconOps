@@ -76,6 +76,7 @@ button {
 
 .brand-mark {
   color: #fff;
+  font-size: 25px;
 }
 
 .header-label {
@@ -99,7 +100,7 @@ button {
 .eyebrow {
   display: inline-block;
   color: var(--color-primary-light);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 2px;
   text-transform: uppercase;
