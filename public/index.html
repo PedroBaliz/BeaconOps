@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -67,6 +68,7 @@
             <span>Status HTTP</span>
             <strong id="http-value">—</strong>
           </article>
+
           <article class="metric-card">
             <span>Latência</span>
             <strong id="latency-value">—</strong>
@@ -89,6 +91,7 @@
           <span class="eyebrow">MONITORAMENTO CONTÍNUO</span>
           <h2>Serviços monitorados</h2>
         </div>
+
         <button
           id="refresh-monitors"
           type="button"
@@ -166,6 +169,7 @@
           <span class="eyebrow">VISÃO INDIVIDUAL</span>
           <h2 id="selected-monitor-name">Detalhes do serviço</h2>
         </div>
+
         <button
           id="close-monitor-details"
           type="button"
@@ -182,14 +186,22 @@
           <span>Status atual</span>
           <strong id="selected-monitor-status">—</strong>
         </article>
+
         <article class="metric-card">
           <span>Última latência</span>
           <strong id="selected-monitor-latency">—</strong>
         </article>
+
+        <article class="metric-card">
+          <span>Latência média (24h)</span>
+          <strong id="selected-monitor-average-latency">—</strong>
+        </article>
+
         <article class="metric-card">
           <span>Intervalo atual</span>
           <strong id="selected-monitor-interval">—</strong>
         </article>
+
         <article class="metric-card">
           <span>Última verificação</span>
           <strong id="selected-monitor-checked-at">—</strong>
@@ -249,6 +261,7 @@
           <span class="eyebrow">REGISTROS GERAIS</span>
           <h2>Histórico de análises</h2>
         </div>
+
         <button
           id="refresh-history"
           type="button"

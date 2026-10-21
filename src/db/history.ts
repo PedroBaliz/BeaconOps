@@ -60,3 +60,26 @@ export async function getAnalysisHistory() {
 
   return result.rows;
 }
+export async function getAverageLatencyByUrl(
+  url: string
+): Promise<number | null> {
+  const query = `
+    SELECT ROUND(AVG(latency_ms)) AS "averageLatencyMs"
+    FROM analysis_history
+    WHERE url = $1
+      AND checked_at >= NOW() - INTERVAL '24 hours'
+      AND checked_at <= NOW()
+      AND latency_ms IS NOT NULL
+      AND is_online = TRUE
+  `;
+
+  const result = await pool.query<{
+    averageLatencyMs: string | number | null;
+  }>(query, [url]);
+
+  const average = result.rows[0]?.averageLatencyMs;
+
+  return average === null || average === undefined
+    ? null
+    : Number(average);
+}

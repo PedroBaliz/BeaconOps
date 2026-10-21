@@ -28,34 +28,47 @@ const refreshMonitorsButton = document.getElementById("refresh-monitors");
 const monitorDetailsSection = document.getElementById(
   "monitor-details-section"
 );
+
 const selectedMonitorName = document.getElementById("selected-monitor-name");
 const selectedMonitorUrl = document.getElementById("selected-monitor-url");
+
 const selectedMonitorStatus = document.getElementById(
   "selected-monitor-status"
 );
+
 const selectedMonitorLatency = document.getElementById(
   "selected-monitor-latency"
 );
+
+const selectedMonitorAverageLatency = document.getElementById(
+  "selected-monitor-average-latency"
+);
+
 const selectedMonitorInterval = document.getElementById(
   "selected-monitor-interval"
 );
+
 const selectedMonitorCheckedAt = document.getElementById(
   "selected-monitor-checked-at"
 );
+
 const closeMonitorDetailsButton = document.getElementById(
   "close-monitor-details"
 );
 
 const editIntervalForm = document.getElementById("edit-interval-form");
+
 const editMonitorIntervalInput = document.getElementById(
   "edit-monitor-interval"
 );
+
 const saveIntervalButton = document.getElementById("save-interval-button");
 const editIntervalMessage = document.getElementById("edit-interval-message");
 
 const selectedHistoryMessage = document.getElementById(
   "selected-history-message"
 );
+
 const selectedHistoryBody = document.getElementById("selected-history-body");
 
 let selectedMonitorId = null;
@@ -446,6 +459,11 @@ async function showMonitorDetails(id) {
       monitor.lastLatencyMs != null
         ? `${monitor.lastLatencyMs} ms`
         : "Sem dados";
+
+    selectedMonitorAverageLatency.textContent =
+      monitor.averageLatencyMs != null
+        ? `${monitor.averageLatencyMs} ms`
+        : "Dados insuficientes";
 
     selectedMonitorInterval.textContent = formatInterval(
       monitor.intervalSeconds

@@ -1,7 +1,12 @@
+
 import { Router } from "express";
 import { checkUrl } from "../core/checker.js";
 import { analyzeResult } from "../core/analyzer.js";
-import { saveAnalysis, getAnalysisHistory } from "../db/history.js";
+import {
+  saveAnalysis,
+  getAnalysisHistory,
+  getAverageLatencyByUrl,
+} from "../db/history.js";
 import {
   createMonitoredService,
   getMonitoredServices,
@@ -102,9 +107,14 @@ router.get("/monitors/:id", async (req, res) => {
       return;
     }
 
+    const averageLatencyMs = await getAverageLatencyByUrl(monitor.url);
+
     res.json({
       success: true,
-      monitor,
+      monitor: {
+        ...monitor,
+        averageLatencyMs,
+      },
     });
   } catch {
     res.status(500).json({
