@@ -81,6 +81,58 @@ export async function getMonitoredServices(): Promise<MonitoredService[]> {
   return result.rows;
 }
 
+export async function getMonitoredServiceById(
+  id: number
+): Promise<MonitoredService | null> {
+  const query = `
+    SELECT
+      m.id,
+      m.name,
+      m.url,
+      m.interval_seconds AS "intervalSeconds",
+      m.is_active AS "isActive",
+      m.created_at AS "createdAt",
+      m.next_check_at AS "nextCheckAt",
+      latest.analysis_status AS "lastStatus",
+      latest.latency_ms AS "lastLatencyMs",
+      latest.checked_at AS "lastCheckedAt"
+    FROM monitored_services m
+    LEFT JOIN LATERAL (
+      SELECT
+        h.analysis_status,
+        h.latency_ms,
+        h.checked_at
+      FROM analysis_history h
+      WHERE h.url = m.url
+      ORDER BY h.checked_at DESC
+      LIMIT 1
+    ) latest ON TRUE
+    WHERE m.id = $1
+  `;
+
+  const result = await pool.query<MonitoredService>(query, [id]);
+
+  return result.rows[0] ?? null;
+}
+
+export async function updateMonitoredServiceInterval(
+  id: number,
+  intervalSeconds: number
+): Promise<boolean> {
+  const query = `
+    UPDATE monitored_services
+    SET
+      interval_seconds = $2,
+      next_check_at = NOW() + ($2 * INTERVAL '1 second')
+    WHERE id = $1
+    RETURNING id
+  `;
+
+  const result = await pool.query(query, [id, intervalSeconds]);
+
+  return result.rowCount === 1;
+}
+
 export async function getDueMonitoredServices(): Promise<MonitoredService[]> {
   const query = `
     SELECT

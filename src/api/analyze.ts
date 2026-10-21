@@ -1,4 +1,3 @@
-
 import { Router } from "express";
 import { checkUrl } from "../core/checker.js";
 import { analyzeResult } from "../core/analyzer.js";
@@ -6,6 +5,8 @@ import { saveAnalysis, getAnalysisHistory } from "../db/history.js";
 import {
   createMonitoredService,
   getMonitoredServices,
+  getMonitoredServiceById,
+  updateMonitoredServiceInterval,
 } from "../db/monitored-services.js";
 import { validatePublicUrl } from "../core/url-validator.js";
 
@@ -77,6 +78,90 @@ router.get("/monitors", async (_req, res) => {
   } catch {
     res.status(500).json({
       error: "Não foi possível consultar os serviços monitorados.",
+    });
+  }
+});
+
+router.get("/monitors/:id", async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({
+      error: "ID do serviço inválido.",
+    });
+    return;
+  }
+
+  try {
+    const monitor = await getMonitoredServiceById(id);
+
+    if (!monitor) {
+      res.status(404).json({
+        error: "Serviço monitorado não encontrado.",
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      monitor,
+    });
+  } catch {
+    res.status(500).json({
+      error: "Não foi possível consultar o serviço monitorado.",
+    });
+  }
+});
+
+router.patch("/monitors/:id/interval", async (req, res) => {
+  const id = Number(req.params.id);
+  const { intervalSeconds } = req.body as {
+    intervalSeconds?: unknown;
+  };
+
+  if (!Number.isInteger(id) || id <= 0) {
+    res.status(400).json({
+      error: "ID do serviço inválido.",
+    });
+    return;
+  }
+
+  if (
+    typeof intervalSeconds !== "number" ||
+    !Number.isInteger(intervalSeconds) ||
+    intervalSeconds < 60 ||
+    intervalSeconds > 86400
+  ) {
+    res.status(400).json({
+      error:
+        "O intervalo deve ser um número inteiro entre 60 e 86400 segundos.",
+    });
+    return;
+  }
+
+  try {
+    const updated = await updateMonitoredServiceInterval(
+      id,
+      intervalSeconds
+    );
+
+    if (!updated) {
+      res.status(404).json({
+        error: "Serviço monitorado não encontrado.",
+      });
+      return;
+    }
+
+    const monitor = await getMonitoredServiceById(id);
+
+    res.json({
+      success: true,
+      message: "Intervalo de monitoramento atualizado.",
+      monitor,
+    });
+  } catch {
+    res.status(500).json({
+      error: "Não foi possível atualizar o intervalo de monitoramento.",
     });
   }
 });
