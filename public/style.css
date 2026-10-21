@@ -65,18 +65,18 @@ button {
 }
 
 .brand {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  color: #fff;
   text-decoration: none;
-  font-size: 21px;
-  font-weight: 750;
-  letter-spacing: -0.5px;
+  flex-shrink: 0;
 }
 
-.brand-mark {
-  color: #fff;
-  font-size: 25px;
+.brand-logo {
+  display: block;
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .header-label {
@@ -551,8 +551,8 @@ select:focus-visible {
     min-height: 68px;
   }
 
-  .brand {
-    font-size: 18px;
+  .brand-logo {
+    width: 190px;
   }
 
   .header-label {
@@ -644,6 +644,7 @@ select:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+
 /* Descrição da página */
 .hero > p {
   max-width: 650px;
